@@ -15,6 +15,7 @@ import Settings from "../pages/Settings";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Dashboard from "../pages/Dashboard";
 
 /*
 =================================================
@@ -93,6 +94,10 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
+        <Route
+          path="/Dashboard"
+          element={<Dashboard />}
+        />
 
         <Route
           path="/profile"
