@@ -3,13 +3,102 @@ import "../styles/landing.css";
 
 const LandingPage = () => {
   const features = [
-    "AI Recommendation",
-    "Journey Companion",
-    "AI Chatbot",
-    "Women Safety",
-    "Emergency Medical",
-    "Lost Item AI",
-  ];
+  {
+    title: "Seat Exchange",
+    icon: "fa-right-left",
+    desc: "Exchange seats with verified passengers."
+  },
+  {
+    title: "PNR Verification",
+    icon: "fa-ticket",
+    desc: "Verify journey details using PNR."
+  },
+  {
+    title: "Family Auto Linking",
+    icon: "fa-people-group",
+    desc: "Automatically connect family travelers."
+  },
+  {
+    title: "Seat Exchange History",
+    icon: "fa-clock-rotate-left",
+    desc: "View all previous exchange records."
+  },
+  {
+    title: "QR Verification",
+    icon: "fa-qrcode",
+    desc: "Instant QR based passenger validation."
+  },
+  {
+    title: "Multi-Person Exchange",
+    icon: "fa-users",
+    desc: "Swap seats among multiple travelers."
+  },
+  {
+    title: "Temporary Exchange",
+    icon: "fa-repeat",
+    desc: "Short duration seat exchange support."
+  },
+  {
+    title: "AI Recommendation",
+    icon: "fa-robot",
+    desc: "AI suggests best seat options."
+  },
+  {
+    title: "Journey Companion",
+    icon: "fa-user-group",
+    desc: "Find compatible co-travelers."
+  },
+  {
+    title: "AI Chatbot",
+    icon: "fa-comments",
+    desc: "24x7 railway assistance chatbot."
+  },
+  {
+    title: "Coach Heatmap",
+    icon: "fa-chart-column",
+    desc: "Visual coach occupancy overview."
+  },
+  {
+    title: "Live Coach Map",
+    icon: "fa-map-location-dot",
+    desc: "Real-time coach navigation."
+  },
+  {
+    title: "Train Information",
+    icon: "fa-train",
+    desc: "Complete train details and status."
+  },
+  {
+    title: "Station Navigator",
+    icon: "fa-location-dot",
+    desc: "Navigate stations with ease."
+  },
+  {
+    title: "Reward System",
+    icon: "fa-gift",
+    desc: "Earn rewards for participation."
+  },
+  {
+    title: "Lost Item Detection",
+    icon: "fa-magnifying-glass",
+    desc: "AI-powered lost item support."
+  },
+  {
+    title: "Crowd Density Prediction",
+    icon: "fa-users-viewfinder",
+    desc: "Predict coach crowd levels."
+  },
+  {
+    title: "Women Safety Matching",
+    icon: "fa-shield-heart",
+    desc: "Safe travel recommendations."
+  },
+  {
+    title: "Emergency Medical Match",
+    icon: "fa-briefcase-medical",
+    desc: "Locate nearby medical support."
+  }
+];
 
   const faqs = [
     {
@@ -147,32 +236,47 @@ const LandingPage = () => {
 
       {/* ================= FEATURES ================= */}
 
-      <section className="features">
+    <section className="features">
 
-        <h2>Feature Preview</h2>
+  <div className="section-header">
+    <span>FEATURES</span>
 
-        <div className="feature-grid">
+    <h2>Complete RailSwap Ecosystem</h2>
 
-          {features.map((feature, index) => (
-            <div
-              className="feature-card"
-              key={index}
-            >
-              <i className="fa-solid fa-train-subway"></i>
+    <p>
+      Smart railway assistance platform with
+      AI powered passenger services.
+    </p>
+  </div>
 
-              <h3>{feature}</h3>
+  <div className="feature-grid">
 
-              <p>
-                AI powered module designed
-                to improve passenger comfort
-                and railway experience.
-              </p>
-            </div>
-          ))}
+    {features.map((item, index) => (
 
+      <div
+        className="feature-card"
+        key={index}
+      >
+
+        <div className="feature-icon">
+          <i className={`fa-solid ${item.icon}`}></i>
         </div>
 
-      </section>
+        <h3>{item.title}</h3>
+
+        <p>{item.desc}</p>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</section> 
+
+       
+
+        
 
       {/* ================= HOW IT WORKS ================= */}
 
