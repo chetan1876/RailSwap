@@ -60,7 +60,7 @@ const Sidebar = () => {
         <div className="sidebar-menu">
 
           <NavLink
-            to="/"
+            to="/dashboard"
             className="sidebar-link"
           >
             <i className="fa-solid fa-house"></i>
@@ -96,7 +96,7 @@ const Sidebar = () => {
       </aside>
 
       <div className="bottom-nav">
-        <NavLink to="/">
+        <NavLink to="/dashboard">
           <i className="fa-solid fa-house"></i>
         </NavLink>
 
