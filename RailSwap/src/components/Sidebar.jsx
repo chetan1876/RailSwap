@@ -41,6 +41,100 @@ const Sidebar = () => {
       icon: "fa-solid fa-briefcase-medical",
       path: "/emergency-medical",
     },
+
+    
+  {
+    name: "AI Recommendation",
+    icon: "fa-solid fa-robot",
+    path: "/ai-recommendation",
+  },
+  {
+    name: "Journey Companion",
+    icon: "fa-solid fa-users",
+    path: "/journey-companion",
+  },
+  {
+    name: "AI Chatbot",
+    icon: "fa-solid fa-comments",
+    path: "/chatbot",
+  },
+  {
+    name: "Lost Item AI",
+    icon: "fa-solid fa-magnifying-glass",
+    path: "/lost-item-ai",
+  },
+  {
+    name: "Crowd Density",
+    icon: "fa-solid fa-chart-column",
+    path: "/crowd-density",
+  },
+  {
+    name: "Women Safety",
+    icon: "fa-solid fa-shield-halved",
+    path: "/women-safety",
+  },
+  {
+    name: "Emergency Medical",
+    icon: "fa-solid fa-briefcase-medical",
+    path: "/emergency-medical",
+  },
+
+  // New Features
+
+  {
+    name: "Live Coach Map",
+    icon: "fa-solid fa-train",
+    path: "/live-coach-map",
+  },
+  {
+    name: "Multi Seat Swap",
+    icon: "fa-solid fa-right-left",
+    path: "/multi-seat-swap",
+  },
+  {
+    name: "Nearby Station Guide",
+    icon: "fa-solid fa-map-location-dot",
+    path: "/station-guide",
+  },
+  {
+    name: "Food Ordering",
+    icon: "fa-solid fa-utensils",
+    path: "/food-ordering",
+  },
+  {
+    name: "Train Tracking",
+    icon: "fa-solid fa-location-crosshairs",
+    path: "/train-tracking",
+  },
+  {
+    name: "Luggage Tracker",
+    icon: "fa-solid fa-suitcase",
+    path: "/luggage-tracker",
+  },
+  {
+    name: "PNR Status",
+    icon: "fa-solid fa-ticket",
+    path: "/pnr-status",
+  },
+  {
+    name: "Complaint Portal",
+    icon: "fa-solid fa-circle-exclamation",
+    path: "/complaint-portal",
+  },
+  {
+    name: "Travel History",
+    icon: "fa-solid fa-clock-rotate-left",
+    path: "/travel-history",
+  },
+  {
+    name: "Rail News",
+    icon: "fa-solid fa-newspaper",
+    path: "/rail-news",
+  },
+
+
+
+
   ];
 
   return (
