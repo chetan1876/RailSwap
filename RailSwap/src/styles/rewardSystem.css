@@ -1,0 +1,197 @@
+.reward-page{
+  padding:20px;
+}
+
+.reward-header{
+  margin-bottom:25px;
+}
+
+.reward-header h1{
+  font-size:34px;
+  color:#111827;
+}
+
+.reward-header p{
+  color:#6b7280;
+}
+
+.reward-top{
+  display:grid;
+  grid-template-columns:350px 1fr;
+  gap:20px;
+  margin-bottom:25px;
+}
+
+.points-card{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:24px;
+  padding:25px;
+  text-align:center;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.points-circle{
+  width:160px;
+  height:160px;
+
+  margin:20px auto;
+
+  border-radius:50%;
+
+  background:
+  linear-gradient(
+    135deg,
+    #2563eb,
+    #3b82f6
+  );
+
+  color:white;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  font-size:38px;
+  font-weight:700;
+}
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:
+  repeat(3,1fr);
+
+  gap:20px;
+}
+
+.stat-box{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+  padding:25px;
+  text-align:center;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.stat-box h2{
+  color:#2563eb;
+}
+
+.reward-section{
+  margin-bottom:25px;
+}
+
+.reward-grid{
+  display:grid;
+  grid-template-columns:
+  repeat(2,1fr);
+
+  gap:20px;
+}
+
+.reward-card{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+  padding:25px;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.reward-card h3{
+  margin-bottom:10px;
+}
+
+.reward-card p{
+  color:#6b7280;
+}
+
+.reward-card span{
+  display:inline-block;
+  margin-top:12px;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:13px;
+}
+
+.available{
+  background:#dcfce7;
+  color:#15803d;
+}
+
+.locked{
+  background:#fee2e2;
+  color:#dc2626;
+}
+
+.reward-card button{
+  width:100%;
+  margin-top:18px;
+
+  border:none;
+
+  background:#2563eb;
+  color:white;
+
+  padding:12px;
+
+  border-radius:12px;
+
+  cursor:pointer;
+}
+
+.achievement-section{
+  margin-bottom:25px;
+}
+
+.achievement-card{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  padding:20px;
+
+  display:flex;
+  justify-content:space-between;
+
+  margin-bottom:12px;
+}
+
+.reward-ai-card{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+  padding:25px;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.reward-ai-card p{
+  line-height:1.8;
+}
+
+@media(max-width:768px){
+
+.reward-top{
+grid-template-columns:1fr;
+}
+
+.stats-grid{
+grid-template-columns:1fr;
+}
+
+.reward-grid{
+grid-template-columns:1fr;
+}
+
+.achievement-card{
+flex-direction:column;
+gap:10px;
+}
+
+}

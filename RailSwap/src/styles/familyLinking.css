@@ -1,0 +1,129 @@
+.family-page{
+  padding:20px;
+}
+
+.family-header{
+  margin-bottom:25px;
+}
+
+.family-header h1{
+  font-size:34px;
+  color:#111827;
+}
+
+.family-header p{
+  color:#6b7280;
+}
+
+.family-stats{
+  margin-bottom:25px;
+}
+
+.family-stat-card{
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+  padding:25px;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.family-stat-card h2{
+  color:#2563eb;
+}
+
+.family-form-card{
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+
+  padding:25px;
+
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+
+  margin-bottom:25px;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.family-form-card input,
+.family-form-card select{
+  padding:14px;
+  border:1px solid #d1d5db;
+  border-radius:12px;
+}
+
+.family-form-card button{
+  background:#2563eb;
+  color:white;
+
+  border:none;
+
+  padding:14px;
+
+  border-radius:12px;
+
+  cursor:pointer;
+}
+
+.family-form-card button:hover{
+  background:#1d4ed8;
+}
+
+.member-list h2{
+  margin-bottom:20px;
+}
+
+.member-card{
+  background:#ffffff;
+
+  border:1px solid #e5e7eb;
+
+  border-radius:18px;
+
+  padding:20px;
+
+  margin-bottom:15px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  box-shadow:
+  0 4px 15px rgba(0,0,0,.05);
+}
+
+.member-card h3{
+  color:#111827;
+}
+
+.member-card p{
+  color:#6b7280;
+}
+
+.remove-btn{
+  background:#dc2626;
+  color:white;
+
+  border:none;
+
+  padding:10px 18px;
+
+  border-radius:10px;
+
+  cursor:pointer;
+}
+
+@media(max-width:768px){
+
+.member-card{
+flex-direction:column;
+gap:15px;
+align-items:flex-start;
+}
+
+}
