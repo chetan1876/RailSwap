@@ -1,3 +1,6 @@
+import { FaTrophy } from "react-icons/fa6";
+
+
 <div className="relative bg-white rounded-3xl p-6 shadow-xl border border-gray-100 overflow-hidden">
 
   {/* Decorative Background */}
