@@ -16,6 +16,25 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Dashboard from "../pages/Dashboard";
+import SeatExchange from "../pages/SeatExchange";
+import PNRVerification from "../pages/PNRVerification";
+import FamilyLinking from "../pages/FamilyLinking";
+import QRVerification from "../pages/QRVerification";
+
+import AIRecommendation from "../pages/AIRecommendation";
+import JourneyCompanion from "../pages/JourneyCompanion";
+import AIChatbot from "../pages/AIChatbot";
+import CoachHeatmap from "../pages/CoachHeatmap";
+
+import LiveCoachMap from "../pages/LiveCoachMap";
+import TrainInformation from "../pages/TrainInformation";
+import StationNavigator from "../pages/StationNavigator";
+import RewardSystem from "../pages/RewardSystem";
+
+import LostItemAI from "../pages/LostItemAI";
+import CrowdDensity from "../pages/CrowdDensity";
+import WomenSafety from "../pages/WomenSafety";
+import EmergencyMedical from "../pages/EmergencyMedical";
 
 /*
 =================================================
@@ -98,6 +117,29 @@ const AppRoutes = () => {
           path="/Dashboard"
           element={<Dashboard />}
         />
+
+       <Route path="/dashboard" element={<Dashboard />} />
+
+       <Route path="/seat-exchange" element={<SeatExchange />} />
+       <Route path="/pnr-verification" element={<PNRVerification />} />
+       <Route path="/family-linking" element={<FamilyLinking />} />
+       <Route path="/qr-verification" element={<QRVerification />} />
+
+       <Route path="/ai-recommendation" element={<AIRecommendation />} />
+       <Route path="/journey-companion" element={<JourneyCompanion />} />
+       <Route path="/chatbot" element={<AIChatbot />} />
+       <Route path="/coach-heatmap" element={<CoachHeatmap />} />
+
+       <Route path="/live-coach-map" element={<LiveCoachMap />} />
+       <Route path="/train-information" element={<TrainInformation />} />
+       <Route path="/station-navigator" element={<StationNavigator />} />
+       <Route path="/reward-system" element={<RewardSystem />} />
+
+       <Route path="/lost-item-ai" element={<LostItemAI />} />
+       <Route path="/crowd-density" element={<CrowdDensity />} />
+       <Route path="/women-safety" element={<WomenSafety />} />
+       <Route path="/emergency-medical" element={<EmergencyMedical />} />
+
 
         <Route
           path="/profile"

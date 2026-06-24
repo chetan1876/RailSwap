@@ -5,44 +5,27 @@ import "../styles/sidebar.css";
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const featureItems = [
-    {
-      name: "AI Recommendation",
-      icon: "fa-solid fa-robot",
-      path: "/ai-recommendation",
-    },
-    {
-      name: "Journey Companion",
-      icon: "fa-solid fa-users",
-      path: "/journey-companion",
-    },
-    {
-      name: "AI Chatbot",
-      icon: "fa-solid fa-comments",
-      path: "/chatbot",
-    },
-    {
-      name: "Lost Item AI",
-      icon: "fa-solid fa-magnifying-glass",
-      path: "/lost-item-ai",
-    },
-    {
-      name: "Crowd Density",
-      icon: "fa-solid fa-chart-column",
-      path: "/crowd-density",
-    },
-    {
-      name: "Women Safety",
-      icon: "fa-solid fa-shield-halved",
-      path: "/women-safety",
-    },
-    {
-      name: "Emergency Medical",
-      icon: "fa-solid fa-briefcase-medical",
-      path: "/emergency-medical",
-    },
-
-    
+ const featureItems = [
+  {
+    name: "Seat Exchange",
+    icon: "fa-solid fa-right-left",
+    path: "/seat-exchange",
+  },
+  {
+    name: "PNR Verification",
+    icon: "fa-solid fa-ticket",
+    path: "/pnr-verification",
+  },
+  {
+    name: "Family Linking",
+    icon: "fa-solid fa-people-group",
+    path: "/family-linking",
+  },
+  {
+    name: "QR Verification",
+    icon: "fa-solid fa-qrcode",
+    path: "/qr-verification",
+  },
   {
     name: "AI Recommendation",
     icon: "fa-solid fa-robot",
@@ -57,6 +40,31 @@ const Sidebar = () => {
     name: "AI Chatbot",
     icon: "fa-solid fa-comments",
     path: "/chatbot",
+  },
+  {
+    name: "Coach Heatmap",
+    icon: "fa-solid fa-map",
+    path: "/coach-heatmap",
+  },
+  {
+    name: "Live Coach Map",
+    icon: "fa-solid fa-location-dot",
+    path: "/live-coach-map",
+  },
+  {
+    name: "Train Information",
+    icon: "fa-solid fa-train",
+    path: "/train-information",
+  },
+  {
+    name: "Station Navigator",
+    icon: "fa-solid fa-compass",
+    path: "/station-navigator",
+  },
+  {
+    name: "Reward System",
+    icon: "fa-solid fa-gift",
+    path: "/reward-system",
   },
   {
     name: "Lost Item AI",
@@ -78,64 +86,7 @@ const Sidebar = () => {
     icon: "fa-solid fa-briefcase-medical",
     path: "/emergency-medical",
   },
-
-  // New Features
-
-  {
-    name: "Live Coach Map",
-    icon: "fa-solid fa-train",
-    path: "/live-coach-map",
-  },
-  {
-    name: "Multi Seat Swap",
-    icon: "fa-solid fa-right-left",
-    path: "/multi-seat-swap",
-  },
-  {
-    name: "Nearby Station Guide",
-    icon: "fa-solid fa-map-location-dot",
-    path: "/station-guide",
-  },
-  {
-    name: "Food Ordering",
-    icon: "fa-solid fa-utensils",
-    path: "/food-ordering",
-  },
-  {
-    name: "Train Tracking",
-    icon: "fa-solid fa-location-crosshairs",
-    path: "/train-tracking",
-  },
-  {
-    name: "Luggage Tracker",
-    icon: "fa-solid fa-suitcase",
-    path: "/luggage-tracker",
-  },
-  {
-    name: "PNR Status",
-    icon: "fa-solid fa-ticket",
-    path: "/pnr-status",
-  },
-  {
-    name: "Complaint Portal",
-    icon: "fa-solid fa-circle-exclamation",
-    path: "/complaint-portal",
-  },
-  {
-    name: "Travel History",
-    icon: "fa-solid fa-clock-rotate-left",
-    path: "/travel-history",
-  },
-  {
-    name: "Rail News",
-    icon: "fa-solid fa-newspaper",
-    path: "/rail-news",
-  },
-
-
-
-
-  ];
+];
 
   return (
     <>
