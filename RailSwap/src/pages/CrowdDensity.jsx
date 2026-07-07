@@ -71,25 +71,69 @@ const CrowdDensity = () => {
 
           <div className="station-status">
             <h4>Station Status</h4>
-            <span>Operational</span>
+            <p>
+              Select a station to monitor live crowd updates and AI predictions.
+            </p>
+            
           </div>
         </div>
 
         <div className="summary-grid">
           <div className="summary-card">
+            <div className="summary-icon">👥</div>
+
             <h2>72%</h2>
+
             <p>Current Crowd</p>
+
+            <span className="summary-badge">● Live</span>
+
+            <div className="summary-progress">
+              <div className="summary-fill" style={{ width: "72%" }}></div>
+            </div>
+
+            <small>+8% Last Hour</small>
           </div>
 
           <div className="summary-card">
+            <div className="summary-icon">⚠️</div>
+
             <h2>High</h2>
+
             <p>Risk Level</p>
+
+            <span className="summary-badge warning">Peak Time</span>
+
+            <div className="summary-progress">
+              <div
+                className="summary-fill warning-fill"
+                style={{ width: "88%" }}
+              ></div>
+            </div>
+
+            <small>Platform 3 Busy</small>
           </div>
 
           <div className="summary-card">
+            <div className="summary-icon">🚉</div>
+
             <h2>14K</h2>
+
             <p>Passengers</p>
+
+            <span className="summary-badge info">Updated</span>
+
+            <div className="summary-progress">
+              <div
+                className="summary-fill info-fill"
+                style={{ width: "90%" }}
+              ></div>
+            </div>
+
+            <small>Today</small>
           </div>
+
+          <div className="station-extra"></div>
         </div>
       </div>
 

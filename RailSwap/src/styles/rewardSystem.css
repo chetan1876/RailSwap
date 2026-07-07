@@ -295,3 +295,13 @@ gap:10px;
 }
 
 }
+
+.stats-grid{
+    padding:15px 0;
+    border-bottom:1px solid #f1f5f9;
+    margin-bottom:15px;
+    size:14px;
+    font-weight:600;
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:20px;
+}

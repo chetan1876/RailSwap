@@ -59,6 +59,15 @@ const LostItemAI = () => {
           {image && <img src={image} alt="Preview" className="preview-image" />}
 
           <button onClick={() => setSearched(true)}>Search With AI</button>
+           <br></br>
+
+
+          <p className="upload-note">
+            Note: Please upload a clear image of the lost item. AI will search
+            for matching items across available stations. Results may vary
+            depending on image quality and available records. Ensure the image
+            clearly shows the item for better accuracy.
+          </p>
         </div>
 
         <div className="stats-card">

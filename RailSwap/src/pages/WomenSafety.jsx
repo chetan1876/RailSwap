@@ -47,8 +47,59 @@ const WomenSafety = () => {
 
         <div className="safety-stats">
           <div className="stat-card">
+            <div className="stat-icon traveler-icon">👩</div>
+
             <h2>120+</h2>
+
             <p>Verified Travelers</p>
+
+            <span className="live-tag">● 85 Active Now</span>
+
+            <div className="progress-bar">
+              <div
+                className="progress-fill pink-fill"
+                style={{ width: "82%" }}
+              ></div>
+            </div>
+
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon monitor-icon">🛡️</div>
+
+            <h2>24×7</h2>
+
+            <p>Monitoring</p>
+
+            <span className="live-tag success">● AI Active</span>
+
+            <div className="progress-bar">
+              <div
+                className="progress-fill green-fill"
+                style={{ width: "100%" }}
+              ></div>
+            </div>
+
+          
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon accuracy-icon">🎯</div>
+
+            <h2>98%</h2>
+
+            <p>Safety Accuracy</p>
+
+            <span className="live-tag blue">● Verified</span>
+
+            <div className="progress-bar">
+              <div
+                className="progress-fill blue-fill"
+                style={{ width: "98%" }}
+              ></div>
+            </div>
+
+            
           </div>
 
           <div className="stat-card">
@@ -67,13 +118,37 @@ const WomenSafety = () => {
         <h2>AI Safe Seat Suggestions</h2>
 
         <div className="seat-grid">
-          <div className="safe-seat">B2 - 21</div>
+          <div className="safe-seat">
+            <div className="seat-top">
+              <h3>B2-21</h3>
+              <span className="safe-badge">Safe</span>
+            </div>
+            <p>98% Match</p>
+          </div>
 
-          <div className="safe-seat">B2 - 24</div>
+          <div className="safe-seat">
+            <div className="seat-top">
+              <h3>B2-24</h3>
+              <span className="safe-badge">Best</span>
+            </div>
+            <p>97% Match</p>
+          </div>
 
-          <div className="safe-seat">B1 - 18</div>
+          <div className="safe-seat">
+            <div className="seat-top">
+              <h3>B1-18</h3>
+              <span className="safe-badge">Safe</span>
+            </div>
+            <p>96% Match</p>
+          </div>
 
-          <div className="safe-seat">B3 - 12</div>
+          <div className="safe-seat">
+            <div className="seat-top">
+              <h3>B3-12</h3>
+              <span className="safe-badge">Best</span>
+            </div>
+            <p>99% Match</p>
+          </div>
         </div>
       </div>
 
