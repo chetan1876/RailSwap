@@ -5,117 +5,223 @@ const SeatExchange = () => {
     {
       id: 1,
       name: "Rahul Kumar",
-      currentSeat: "B2-42",
-      desiredSeat: "Lower Berth",
-      match: "96%",
+      age: 27,
+      gender: "Male",
+      coach: "B2",
+      currentSeat: "42",
+      preferred: "Lower Berth",
+      station: "Lucknow",
+      journey: "Delhi → Patna",
+      match: 96,
     },
     {
       id: 2,
       name: "Amit Singh",
-      currentSeat: "B3-28",
-      desiredSeat: "Window Seat",
-      match: "89%",
+      age: 31,
+      gender: "Male",
+      coach: "B3",
+      currentSeat: "28",
+      preferred: "Window Seat",
+      station: "Kanpur",
+      journey: "Delhi → Varanasi",
+      match: 89,
     },
   ];
 
   return (
-    <div className="seat-exchange-page">
+    <div className="seat-container">
+
+      {/* Header */}
 
       <div className="page-header">
-        <h1>Seat Exchange</h1>
-        <p>Find and exchange seats with compatible passengers.</p>
+
+        <h1>🚆 Seat Exchange</h1>
+
+        <p>
+          Find compatible passengers and exchange your seat with ease.
+        </p>
+
       </div>
 
-      <div className="stats-grid">
+      {/* Statistics */}
 
-        <div className="stat-card">
+      <div className="stats">
+
+        <div className="card">
           <h2>24</h2>
-          <p>Active Requests</p>
+          <span>Active Requests</span>
         </div>
 
-        <div className="stat-card">
+        <div className="card">
           <h2>92%</h2>
-          <p>Success Rate</p>
+          <span>Success Rate</span>
         </div>
 
-        <div className="stat-card">
+        <div className="card">
           <h2>156</h2>
-          <p>Total Exchanges</p>
+          <span>Total Exchanges</span>
         </div>
 
       </div>
 
-      <div className="seat-layout">
+      {/* Seat Information */}
 
-        <div className="current-seat-card">
-          <h3>Your Current Seat</h3>
+      <div className="top-section">
 
-          <h2>🚆 B2 - 35</h2>
+        <div className="seat-card">
 
-          <span>Middle Berth</span>
+          <h2>Your Current Seat</h2>
 
-          <div className="seat-info">
-            <p>Coach: B2</p>
-            <p>Status: Confirmed</p>
+          <h1>B2 - 35</h1>
+
+          <p>Middle Berth</p>
+
+          <div className="tags">
+
+            <span>Coach B2</span>
+
+            <span>Confirmed</span>
+
           </div>
+
+          <div className="journey-info">
+
+            <p>
+              <strong>Train :</strong> Rajdhani Express
+            </p>
+
+            <p>
+              <strong>Boarding :</strong> New Delhi
+            </p>
+
+            <p>
+              <strong>Destination :</strong> Patna
+            </p>
+
+          </div>
+
         </div>
 
-        <div className="preference-card">
-          <h3>Preferred Seat</h3>
+        <div className="preference">
+
+          <h2>Seat Preference</h2>
+
+          <label>Select Preferred Seat</label>
 
           <select>
+
             <option>Lower Berth</option>
+
             <option>Upper Berth</option>
+
+            <option>Side Lower</option>
+
+            <option>Side Upper</option>
+
             <option>Window Seat</option>
+
           </select>
 
-          <button>Find Matches</button>
+          <button>
+            Find Matches
+          </button>
+
         </div>
 
       </div>
 
-      <div className="request-section">
-        <h2>Available Matches</h2>
+      {/* Match Section */}
+
+      <div className="match-section">
+
+        <h2>
+          Available Matches
+        </h2>
 
         {requests.map((item) => (
-          <div className="request-card" key={item.id}>
 
-            <div className="request-user">
+          <div
+            className="match-card"
+            key={item.id}
+          >
+
+            <div className="left">
 
               <div className="avatar">
                 {item.name.charAt(0)}
               </div>
 
-              <div>
-                <h3>{item.name}</h3>
+              <div className="details">
+
+                <h3>
+                  {item.name}
+                </h3>
 
                 <p>
-                  Current Seat: {item.currentSeat}
+                  <strong>Age :</strong> {item.age} Years
                 </p>
 
-                <small>
-                  Wants: {item.desiredSeat}
-                </small>
+                <p>
+                  <strong>Gender :</strong> {item.gender}
+                </p>
+
+                <p>
+                  <strong>Current Seat :</strong> {item.coach}-{item.currentSeat}
+                </p>
+
+                <p>
+                  <strong>Preferred Seat :</strong> {item.preferred}
+                </p>
+
+                <p>
+                  <strong>Boarding :</strong> {item.station}
+                </p>
+
+                <p>
+                  <strong>Journey :</strong> {item.journey}
+                </p>
+
               </div>
 
             </div>
 
-            <div className="match-score">
-              {item.match} Match
-            </div>
+            <div className="right">
 
-            <div className="actions">
-              <button className="accept-btn">
-                Accept
-              </button>
+              <div className="percentage">
 
-              <button className="reject-btn">
-                Reject
-              </button>
+                {item.match}% Match
+
+              </div>
+
+              <div className="progress">
+
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${item.match}%`,
+                  }}
+                ></div>
+
+              </div>
+
+              <div className="buttons">
+
+                <button className="accept">
+                  Accept
+                </button>
+
+                <button className="reject">
+                  Reject
+                </button>
+
+              </div>
+
             </div>
 
           </div>
+
         ))}
+
       </div>
 
     </div>

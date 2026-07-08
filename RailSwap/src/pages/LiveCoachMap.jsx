@@ -1,127 +1,139 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "../styles/liveCoachMap.css";
+
+// Mock Data: इन सीटों के डेटा को कल को आप API से भी replace कर सकते हैं
+const MOCK_SEATS_DATA = [
+  { no: "1", type: "occupied", berth: "Lower" },
+  { no: "2", type: "available", berth: "Middle" },
+  { no: "3", type: "occupied", berth: "Upper" },
+  { no: "4", type: "available", berth: "Side Lower" },
+  { no: "5", type: "user", berth: "Side Upper" },
+  { no: "6", type: "available", berth: "Lower" },
+  { no: "7", type: "occupied", berth: "Middle" },
+  { no: "8", type: "available", berth: "Upper" },
+  { no: "9", type: "available", berth: "Lower" },
+  { no: "10", type: "occupied", berth: "Middle" },
+  { no: "11", type: "available", berth: "Upper" },
+  { no: "12", type: "occupied", berth: "Side Lower" },
+  { no: "13", type: "available", berth: "Side Upper" },
+  { no: "14", type: "available", berth: "Lower" },
+  { no: "15", type: "occupied", berth: "Middle" },
+  { no: "16", type: "available", berth: "Upper" },
+];
+
+const COACH_OPTIONS = ["B1", "B2", "B3", "S1", "S2"];
 
 const LiveCoachMap = () => {
   const [selectedCoach, setSelectedCoach] = useState("B2");
+  
+  // UseMemo का इस्तेमाल performance बेहतर करने और real-time stats calculate करने के लिए
+  const stats = useMemo(() => {
+    const total = MOCK_SEATS_DATA.length;
+    const available = MOCK_SEATS_DATA.filter(s => s.type === "available").length;
+    const occupied = MOCK_SEATS_DATA.filter(s => s.type === "occupied").length;
+    const occupancyPercentage = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    
+    const availableLowerBerths = MOCK_SEATS_DATA
+      .filter(s => s.type === "available" && s.berth === "Lower")
+      .map(s => s.no);
 
-  const seats = [
-    { no: "1", type: "occupied" },
-    { no: "2", type: "available" },
-    { no: "3", type: "occupied" },
-    { no: "4", type: "available" },
-    { no: "5", type: "user" },
-    { no: "6", type: "available" },
-    { no: "7", type: "occupied" },
-    { no: "8", type: "available" },
-    { no: "9", type: "available" },
-    { no: "10", type: "occupied" },
-    { no: "11", type: "available" },
-    { no: "12", type: "occupied" },
-    { no: "13", type: "available" },
-    { no: "14", type: "available" },
-    { no: "15", type: "occupied" },
-    { no: "16", type: "available" },
-  ];
+    return {
+      available,
+      occupancyPercentage,
+      availableLowerBerths: availableLowerBerths.length > 0 ? availableLowerBerths.join(", ") : "None"
+    };
+  }, []);
 
   return (
-    <div className="live-coach-page">
-
-      <div className="live-header">
-        <div>
+    <div className="live-coach-container">
+      {/* Header Section */}
+      <header className="live-coach-header">
+        <div className="header-title-area">
           <h1>Live Coach Map</h1>
-          <p>
-            View real-time coach layout,
-            occupancy and your current seat.
-          </p>
+          <p>View real-time coach layout, occupancy, and your current seat position.</p>
         </div>
 
-        <select
-          value={selectedCoach}
-          onChange={(e) =>
-            setSelectedCoach(e.target.value)
-          }
-        >
-          <option>B1</option>
-          <option>B2</option>
-          <option>B3</option>
-          <option>S1</option>
-          <option>S2</option>
-        </select>
+        <div className="coach-selector-wrapper">
+          <label htmlFor="coach-select">Select Coach:</label>
+          <select
+            id="coach-select"
+            value={selectedCoach}
+            onChange={(e) => setSelectedCoach(e.target.value)}
+            className="coach-dropdown"
+          >
+            {COACH_OPTIONS.map((coach) => (
+              <option key={coach} value={coach}>{coach}</option>
+            ))}
+          </select>
+        </div>
+      </header>
+
+      {/* Stats Dashboard */}
+      <section className="stats-dashboard">
+        <div className="stat-card">
+          <span className="stat-value">{stats.occupancyPercentage}%</span>
+          <span className="stat-label">Occupancy</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-value">{stats.available}</span>
+          <span className="stat-label">Available Seats</span>
+        </div>
+
+        <div className="stat-card highlight">
+          <span className="stat-value">{selectedCoach}</span>
+          <span className="stat-label">Current Coach</span>
+        </div>
+      </section>
+
+      {/* Legend Indicator */}
+      <div className="map-legend" aria-label="Seat Legend">
+        <div className="legend-item">
+          <span className="legend-color available"></span>
+          <span className="legend-text">Available</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color occupied"></span>
+          <span className="legend-text">Occupied</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color user-seat"></span>
+          <span className="legend-text">Your Seat</span>
+        </div>
       </div>
 
-      <div className="coach-stats">
-
-        <div className="coach-stat-card">
-          <h2>72%</h2>
-          <p>Occupancy</p>
-        </div>
-
-        <div className="coach-stat-card">
-          <h2>28</h2>
-          <p>Available Seats</p>
-        </div>
-
-        <div className="coach-stat-card">
-          <h2>B2</h2>
-          <p>Current Coach</p>
-        </div>
-
-      </div>
-
-      <div className="legend">
-
-        <div>
-          <span className="available-box"></span>
-          Available
-        </div>
-
-        <div>
-          <span className="occupied-box"></span>
-          Occupied
-        </div>
-
-        <div>
-          <span className="user-box"></span>
-          Your Seat
-        </div>
-
-      </div>
-
-      <div className="coach-container">
-
-        <div className="coach-title">
-          Coach {selectedCoach}
-        </div>
-
-        <div className="coach-grid">
-
-          {seats.map((seat) => (
-            <div
+      {/* Layout Grid Map */}
+      <main className="coach-layout-section">
+        <div className="coach-badge">Coach {selectedCoach}</div>
+        
+        <div className="seats-grid">
+          {MOCK_SEATS_DATA.map((seat) => (
+            <button
               key={seat.no}
-              className={`seat-box ${seat.type}`}
+              className={`seat-item ${seat.type}`}
+              title={`Seat ${seat.no} (${seat.berth}) - ${seat.type}`}
+              disabled={seat.type === "occupied"}
             >
-              {seat.no}
-            </div>
+              <span className="seat-number">{seat.no}</span>
+              <span className="seat-berth-tag">{seat.berth.split(" ").map(w => w[0]).join("")}</span>
+            </button>
           ))}
-
         </div>
+      </main>
 
-      </div>
-
-      <div className="coach-info-card">
-
-        <h3>AI Coach Insight</h3>
-
+      {/* AI Insights Card */}
+      <footer className="ai-insights-card">
+        <div className="insights-header">
+          <span className="bot-icon">🤖</span>
+          <h3>AI Coach Insight</h3>
+        </div>
         <p>
-          Coach B2 currently has medium crowd
-          density. Available lower berths:
-          <strong> 12, 18, 24</strong>.
-          Recommended coach for seat exchange:
-          <strong> B1</strong>.
+          Coach <strong>{selectedCoach}</strong> currently has{" "}
+          {stats.occupancyPercentage > 60 ? "high" : "medium"} crowd density. 
+          Available lower berths: <strong>{stats.availableLowerBerths}</strong>. 
+          Recommended coach for a better seat exchange: <strong>{selectedCoach === "B2" ? "B1" : "B2"}</strong>.
         </p>
-
-      </div>
-
+      </footer>
     </div>
   );
 };
