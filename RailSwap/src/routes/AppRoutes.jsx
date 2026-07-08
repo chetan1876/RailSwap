@@ -1,8 +1,4 @@
-import {
-  Routes,
-  Route,
-  Outlet,
-} from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 
 import LandingPage from "../pages/LandingPage";
 import Login from "../pages/Login";
@@ -76,33 +72,17 @@ const DashboardLayout = () => {
 const AppRoutes = () => {
   return (
     <Routes>
-
       {/* Public Routes */}
 
-      <Route
-        path="/"
-        element={<LandingPage />}
-      />
+      <Route path="/" element={<LandingPage />} />
 
-      <Route
-        path="/login"
-        element={<Login />}
-      />
+      <Route path="/login" element={<Login />} />
 
-      <Route
-        path="/register"
-        element={<Register />}
-      />
+      <Route path="/register" element={<Register />} />
 
-      <Route
-        path="/otp"
-        element={<OTPVerification />}
-      />
+      <Route path="/otp" element={<OTPVerification />} />
 
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected Routes */}
 
@@ -113,43 +93,33 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route
-          path="/Dashboard"
-          element={<Dashboard />}
-        />
+        <Route path="/Dashboard" element={<Dashboard />} />
 
-       <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
 
-       <Route path="/seat-exchange" element={<SeatExchange />} />
-       <Route path="/pnr-verification" element={<PNRVerification />} />
-       <Route path="/family-linking" element={<FamilyLinking />} />
-       <Route path="/qr-verification" element={<QRVerification />} />
+        <Route path="/seat-exchange" element={<SeatExchange />} />
+        <Route path="/pnr-verification" element={<PNRVerification />} />
+        <Route path="/family-linking" element={<FamilyLinking />} />
+        <Route path="/qr-verification" element={<QRVerification />} />
 
-       <Route path="/ai-recommendation" element={<AIRecommendation />} />
-       <Route path="/journey-companion" element={<JourneyCompanion />} />
-       <Route path="/chatbot" element={<AIChatbot />} />
-       <Route path="/coach-heatmap" element={<CoachHeatmap />} />
+        <Route path="/ai-recommendation" element={<AIRecommendation />} />
+        <Route path="/journey-companion" element={<JourneyCompanion />} />
+        <Route path="/chatbot" element={<AIChatbot />} />
+        <Route path="/coach-heatmap" element={<CoachHeatmap />} />
 
-       <Route path="/live-coach-map" element={<LiveCoachMap />} />
-       <Route path="/train-information" element={<TrainInformation />} />
-       <Route path="/station-navigator" element={<StationNavigator />} />
-       <Route path="/reward-system" element={<RewardSystem />} />
+        <Route path="/live-coach-map" element={<LiveCoachMap />} />
+        <Route path="/train-information" element={<TrainInformation />} />
+        <Route path="/station-navigator" element={<StationNavigator />} />
+        <Route path="/reward-system" element={<RewardSystem />} />
 
-       <Route path="/lost-item-ai" element={<LostItemAI />} />
-       <Route path="/crowd-density" element={<CrowdDensity />} />
-       <Route path="/women-safety" element={<WomenSafety />} />
-       <Route path="/emergency-medical" element={<EmergencyMedical />} />
+        <Route path="/lost-item-ai" element={<LostItemAI />} />
+        <Route path="/crowd-density" element={<CrowdDensity />} />
+        <Route path="/women-safety" element={<WomenSafety />} />
+        <Route path="/emergency-medical" element={<EmergencyMedical />} />
 
+        <Route path="/profile" element={<Profile />} />
 
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
-
-        <Route
-          path="/settings"
-          element={<Settings />}
-        />
+        <Route path="/settings" element={<Settings />} />
 
         {/*
         =========================================
@@ -164,9 +134,7 @@ const AppRoutes = () => {
         <Route path="/emergency-medical" />
         =========================================
         */}
-
       </Route>
-
     </Routes>
   );
 };
