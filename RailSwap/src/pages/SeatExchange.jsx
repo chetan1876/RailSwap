@@ -1,3 +1,4 @@
+// css
 import "../styles/seatExchange.css";
 
 const SeatExchange = () => {
