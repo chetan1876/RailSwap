@@ -1,128 +1,144 @@
 import { useState } from "react";
-import {
-  FaTrain,
-  FaCircleCheck,
-  FaUser,
-  FaTicket,
-  FaLocationDot,
-} from "react-icons/fa6";
-
 import "../styles/pnrVerification.css";
 
 const PNRVerification = () => {
   const [pnr, setPnr] = useState("");
-  const [data, setData] = useState(null);
-
-  const verifyPNR = () => {
-    if (pnr.length < 10) {
-      alert("Enter a valid 10 digit PNR");
-      return;
-    }
-
-    setData({
-      passenger: "Chetan Kumar",
-      train: "12345 Rajdhani Express",
-      coach: "B2",
-      seat: "35",
-      status: "Confirmed",
-      boarding: "New Delhi",
-      destination: "Kolkata",
-    });
-  };
 
   return (
-    <div className="pnr-page">
-      <div className="pnr-header">
+    <div className="pnr-container">
+
+      {/* Header */}
+
+      <div className="page-header">
         <h1>PNR Verification</h1>
         <p>Verify passenger journey details instantly.</p>
       </div>
 
+      {/* Search Card */}
+
       <div className="pnr-card">
-        <div className="card-top">
+
+        <div className="pnr-title">
+
           <div>
-            <h3>Enter PNR Number</h3>
+            <h2>Enter PNR Number</h2>
             <p>Check ticket status and passenger details</p>
           </div>
 
-          <div className="pnr-icon">
-            <FaTrain />
+          <div className="train-icon">
+            🚆
           </div>
+
         </div>
 
-        <div className="pnr-form">
+        <div className="search-box">
+
           <input
             type="text"
-            maxLength="10"
             placeholder="Enter 10 Digit PNR"
             value={pnr}
+            maxLength={10}
             onChange={(e) => setPnr(e.target.value)}
           />
 
-          <button onClick={verifyPNR}>
+          <button>
             Verify PNR
           </button>
+
         </div>
+
       </div>
 
-      {data && (
-        <div className="result-card">
-          <div className="result-header">
-            <div>
-              <h2>Journey Details</h2>
-              <p>Passenger verification successful</p>
-            </div>
+      {/* Recently Verified */}
 
-            <div className="status-badge">
-              <FaCircleCheck />
-              <span>{data.status}</span>
-            </div>
-          </div>
+      <div className="recent-section">
 
-          <div className="details-grid">
-            <div className="detail-item">
-              <span>
-                <FaUser /> Passenger
-              </span>
-              <h4>{data.passenger}</h4>
-            </div>
+        <div className="recent-header">
 
-            <div className="detail-item">
-              <span>
-                <FaTrain /> Train
-              </span>
-              <h4>{data.train}</h4>
-            </div>
+          <h2>Recently Verified PNRs</h2>
 
-            <div className="detail-item">
-              <span>
-                <FaTicket /> Coach
-              </span>
-              <h4>{data.coach}</h4>
-            </div>
+          <span>Last 3 Searches</span>
 
-            <div className="detail-item">
-              <span>
-                <FaTicket /> Seat
-              </span>
-              <h4>{data.seat}</h4>
-            </div>
-
-            <div className="detail-item">
-              <span>
-                <FaLocationDot /> Boarding
-              </span>
-              <h4>{data.boarding}</h4>
-            </div>
-
-            <div className="detail-item">
-              <span>
-                <FaLocationDot /> Destination
-              </span>
-              <h4>{data.destination}</h4>
-            </div>
-          </div>
         </div>
-      )}
+
+        <div className="recent-list">
+
+          <div className="recent-card">
+
+            <div className="recent-left">
+
+              <h3>8425639178</h3>
+
+              <p>Rajdhani Express</p>
+
+              <small>New Delhi → Patna</small>
+
+            </div>
+
+            <div className="recent-right">
+
+              <span className="status confirmed">
+                Confirmed
+              </span>
+
+              <small>2 min ago</small>
+
+            </div>
+
+          </div>
+
+          <div className="recent-card">
+
+            <div className="recent-left">
+
+              <h3>6452178934</h3>
+
+              <p>Vande Bharat Express</p>
+
+              <small>Lucknow → Delhi</small>
+
+            </div>
+
+            <div className="recent-right">
+
+              <span className="status waiting">
+                WL 12
+              </span>
+
+              <small>8 min ago</small>
+
+            </div>
+
+          </div>
+
+          <div className="recent-card">
+
+            <div className="recent-left">
+
+              <h3>9854123678</h3>
+
+              <p>Shatabdi Express</p>
+
+              <small>Kanpur → Delhi</small>
+
+            </div>
+
+            <div className="recent-right">
+
+              <span className="status rac">
+                RAC 4
+              </span>
+
+              <small>15 min ago</small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };
