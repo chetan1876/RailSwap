@@ -12,25 +12,25 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Dashboard from "../pages/Dashboard";
-import SeatExchange from "../pages/SeatExchange";
-import PNRVerification from "../pages/PNRVerification";
-import FamilyLinking from "../pages/FamilyLinking";
-import QRVerification from "../pages/QRVerification";
+import SeatExchange from "../components/SeatExchange";
+import PNRVerification from "../components/PNRVerification";
+import FamilyLinking from "../components/FamilyLinking";
+import QRVerification from "../components/QRVerification";
 
-import AIRecommendation from "../pages/AIRecommendation";
-import JourneyCompanion from "../pages/JourneyCompanion";
-import AIChatbot from "../pages/AIChatbot";
-import CoachHeatmap from "../pages/CoachHeatmap";
+import AIRecommendation from "../components/AiRecommendation";
+import JourneyCompanion from "../components/JourneyCompanion";
+import AIChatbot from "../components/AIChatbot";
+import CoachHeatmap from "../components/CoachHeatmap";
 
-import LiveCoachMap from "../pages/LiveCoachMap";
-import TrainInformation from "../pages/TrainInformation";
-import StationNavigator from "../pages/StationNavigator";
-import RewardSystem from "../pages/RewardSystem";
+import LiveCoachMap from "../components/LiveCoachMap";
+import TrainInformation from "../components/TrainInformation";
+import StationNavigator from "../components/StationNavigator";
+import RewardSystem from "../components/RewardSystem";
 
-import LostItemAI from "../pages/LostItemAI";
-import CrowdDensity from "../pages/CrowdDensity";
-import WomenSafety from "../pages/WomenSafety";
-import EmergencyMedical from "../pages/EmergencyMedical";
+import LostItemAI from "../components/LostItemAI";
+import CrowdDensity from "../components/CrowdDensity";
+import WomenSafety from "../components/WomenSafety";
+import EmergencyMedical from "../components/EmergencyMedical";
 
 /*
 =================================================
