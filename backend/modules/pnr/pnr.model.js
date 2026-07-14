@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 const mongoose = require("mongoose");
 
 const pnrSchema = new mongoose.Schema(
@@ -63,21 +62,3 @@ const pnrSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("PNR", pnrSchema);
-=======
-const mongoose = require('mongoose');
-
-const pnrLogSchema = new mongoose.Schema({
-    pnrNumber: { type: String, required: true, index: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    trainName: { type: String, required: true },
-    sourceStation: { type: String, required: true },
-    destinationStation: { type: String, required: true },
-    bookingStatus: { type: String, required: true }
-}, {
-    timestamps: true
-});
-
-pnrLogSchema.index({ createdAt: -1 });
-
-module.exports = mongoose.model('PnrLog', pnrLogSchema);
->>>>>>> Stashed changes

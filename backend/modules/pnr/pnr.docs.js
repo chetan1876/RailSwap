@@ -1,6 +1,5 @@
 /**
  * @swagger
-<<<<<<< Updated upstream
  * tags:
  *   name: PNR
  *   description: PNR Verification APIs
@@ -39,10 +38,3 @@
  *       200:
  *         description: Success
  */
-=======
- * /api/exchange/request:
- *   post:
- *     summary: Post a seat swap offer and run matching engine
- */
-module.exports = {};
->>>>>>> Stashed changes

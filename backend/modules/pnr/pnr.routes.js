@@ -1,12 +1,11 @@
-<<<<<<< Updated upstream
 const express = require("express");
-
 const router = express.Router();
 
+// Pure controller file ka path extension ke sath link karein
 const {
-  verifyPNRController,
-  getPNRHistoryController,
-} = require("./pnr.controller");
+    verifyPNRController,
+    getPNRHistoryController
+} = require("./pnr.controller.js"); 
 
 // Verify PNR
 router.post("/verify", verifyPNRController);
@@ -15,13 +14,3 @@ router.post("/verify", verifyPNRController);
 router.get("/history", getPNRHistoryController);
 
 module.exports = router;
-=======
-const express = require('express');
-const router = express.Router();
-const pnrController = require('./pnr.controller'); // 👈 Yeh sahi controller hona chahiye!
-
-router.post('/verify', pnrController.verifyPnr);
-router.get('/recent', pnrController.getRecentPnrs);
-
-module.exports = router;
->>>>>>> Stashed changes

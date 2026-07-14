@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 const PNR = require("./pnr.model");
 
 // Find PNR by Number
@@ -27,22 +26,3 @@ module.exports = {
   getAllPNRs,
   deletePNR,
 };
-=======
-const PnrLog = require('./pnr.model'); // 👈 Yahan pnr.model hona chahiye, seatExchange nahi!
-
-class PnrRepository {
-    async logSearchHistory(data) {
-        await PnrLog.deleteOne({ pnrNumber: data.pnrNumber });
-        return await PnrLog.create(data);
-    }
-
-    async fetchRecentLogs(limitCount) {
-        return await PnrLog.find()
-            .sort({ createdAt: -1 })
-            .limit(limitCount)
-            .lean();
-    }
-}
-
-module.exports = new PnrRepository();
->>>>>>> Stashed changes
