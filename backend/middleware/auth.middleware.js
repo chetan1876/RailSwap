@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = async (
@@ -79,3 +80,17 @@ const authMiddleware = async (
 
 module.exports =
   authMiddleware;
+=======
+module.exports = (req, res, next) => {
+
+    // Temporary Authentication Middleware
+
+    req.user = {
+        id: "demo-user",
+        role: "USER",
+    };
+
+    next();
+
+};
+>>>>>>> Stashed changes
