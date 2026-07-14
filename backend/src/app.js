@@ -1,13 +1,75 @@
-const express = require("express");
+'use strict';
+
+require('dotenv').config();
+
+const express = require('express');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+
+const corsMiddleware = require('../config/cors');
+const { generalLimiter } = require('../config/rateLimit');
+const errorHandler = require('../middleware/errorHandler');
+
+// Route modules
+const authRoutes = require('../modules/auth/auth.routes');
+const chatbotRoutes = require('../modules/chatbot/chatbot.routes');
 
 const app = express();
 
-app.use(express.json());
+// ─── Security Middleware ──────────────────────────────────────────────────────
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // Allow frontend embedding
+}));
+app.use(corsMiddleware);
+app.use(generalLimiter);  // General rate limiting
 
-app.get("/", (req, res) => {
+// ─── Parsing Middleware ───────────────────────────────────────────────────────
+// IMPORTANT: express.json() MUST come before mongoSanitize() so that req.body
+// is populated and the sanitizer can actually scan it for injection operators.
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser());
+app.use(mongoSanitize()); // ← AFTER body parsing so req.body is defined
+
+// ─── Request Logging ──────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
+
+// ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/health', (req, res) => {
   res.json({
-    message: "RailSwap Backend Running"
+    success: true,
+    message: 'RailSwap Backend is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
   });
 });
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'RailSwap API — Smart Railway Passenger Assistance Platform',
+    version: '1.0.0',
+    docs: '/api/docs',
+  });
+});
+
+// ─── API Routes ───────────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatbotRoutes);
+
+// ─── 404 Handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route '${req.originalUrl}' not found.`,
+  });
+});
+
+// ─── Global Error Handler (must be LAST) ─────────────────────────────────────
+app.use(errorHandler);
 
 module.exports = app;
