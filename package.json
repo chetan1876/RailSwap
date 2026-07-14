@@ -1,5 +1,18 @@
 {
+  "name": "railswap-backend",
+  "version": "1.0.0",
+  "description": "RailSwap Production Ready Modular Backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
   "dependencies": {
-    "lucide-react": "^1.23.0"
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "mongoose": "^8.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

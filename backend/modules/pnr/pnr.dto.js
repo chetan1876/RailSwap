@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 const pnrResponseDTO = (pnr) => {
   return {
     id: pnr._id,
@@ -17,3 +18,19 @@ const pnrResponseDTO = (pnr) => {
 module.exports = {
   pnrResponseDTO,
 };
+=======
+class SeatExchangeDTO {
+    constructor(data) {
+        this.trainNumber = data.trainNumber ? data.trainNumber.trim() : null;
+        this.currentSeatNumber = data.currentSeatNumber ? data.currentSeatNumber.trim() : null;
+        this.currentBerthType = data.currentBerthType ? data.currentBerthType.toUpperCase() : null;
+        this.desiredBerthType = data.desiredBerthType ? data.desiredBerthType.toUpperCase() : null;
+    }
+
+    static fromRequest(req) {
+        return new SeatExchangeDTO(req.body);
+    }
+}
+
+module.exports = SeatExchangeDTO;
+>>>>>>> Stashed changes

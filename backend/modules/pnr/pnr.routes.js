@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 const express = require("express");
 
 const router = express.Router();
@@ -14,3 +15,13 @@ router.post("/verify", verifyPNRController);
 router.get("/history", getPNRHistoryController);
 
 module.exports = router;
+=======
+const express = require('express');
+const router = express.Router();
+const pnrController = require('./pnr.controller'); // 👈 Yeh sahi controller hona chahiye!
+
+router.post('/verify', pnrController.verifyPnr);
+router.get('/recent', pnrController.getRecentPnrs);
+
+module.exports = router;
+>>>>>>> Stashed changes
