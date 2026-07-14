@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,4 +11,20 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+=======
+require("dotenv").config();
+
+const app = require("./app");
+
+const connectDatabase = require("../config/database");
+
+connectDatabase();
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(
+    `Server Running On Port ${PORT}`
+  );
+>>>>>>> a685674b9e2c45b496cabb8fd07833cbcfb77f34
 });
