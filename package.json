@@ -1,5 +1,13 @@
 {
+  "name": "railswap-backend",
+  "version": "1.0.0",
+  "description": "RailSwap Production Ready Modular Backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
   "dependencies": {
+<<<<<<< HEAD
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
@@ -13,6 +21,12 @@
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
     "socket.io": "^4.8.3"
+=======
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "mongoose": "^8.3.1"
+>>>>>>> 317acf5bddfb095d7f06cd085dc30fdd15905de1
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
