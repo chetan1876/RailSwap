@@ -36,6 +36,7 @@ const Login = () => {
     email: formData.email,
     password: formData.password,
   });
+  console.log("LOGIN RESPONSE:", res.data);
 
   const { user, token } = res.data;
 

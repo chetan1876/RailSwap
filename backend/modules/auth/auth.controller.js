@@ -110,16 +110,15 @@ const login = async (
 
     res.status(200).json({
       success: true,
-      message:
-        "Login successful",
+      message: "Login successful",
       token,
       user: {
         id: user._id,
-        fullName:
-          user.fullName,
-        email:
-          user.email,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
         role: user.role,
+        isVerified: user.isVerified,
       },
     });
   } catch (error) {
