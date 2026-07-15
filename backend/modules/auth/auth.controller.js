@@ -1,257 +1,54 @@
-const { validationResult } = require(
-  "express-validator"
-);
+'use strict';
 
-const authService = require(
-  "./auth.service"
-);
+const AuthService = require('./auth.service');
+const ApiResponse = require('../../shared/apiResponse');
+const { logger } = require('../../shared/logger');
 
-/* =========================
-   REGISTER
-========================= */
-
-const register = async (
-  req,
-  res
-) => {
-  try {
-    const errors =
-      validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors:
-          errors.array(),
-      });
-    }
-
-    const {
-      fullName,
-      email,
-      phoneNumber,
-      password,
-      gender,
-    } = req.body;
-
-    const result =
-      await authService.registerUser(
-        fullName,
-        email,
-        phoneNumber,
-        password,
-        gender
-      );
-
-    return res.status(201).json({
-      success: true,
-      message:
-        "User registered successfully. Please verify OTP.",
-      data: {
-        user: result.user,
-      },
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message:
-        error.message,
-    });
-  }
-};
-
-/* =========================
-   VERIFY OTP
-========================= */
-
-const verifyOtp =
-  async (req, res) => {
+class AuthController {
+  /**
+   * POST /api/auth/register
+   */
+  async register(req, res, next) {
     try {
-      const errors =
-        validationResult(req);
+      const result = await AuthService.register(req.body);
+      return ApiResponse.success(res, 'Account created successfully. Welcome to RailSwap!', result, 201);
+    } catch (error) {
+      logger.error('Register error', error);
+      next(error);
+    }
+  }
 
-      if (
-        !errors.isEmpty()
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            errors:
-              errors.array(),
-          });
+  /**
+   * POST /api/auth/login
+   */
+  async login(req, res, next) {
+    try {
+      const result = await AuthService.login(req.body);
+      return ApiResponse.success(res, 'Login successful. Welcome back!', result, 200);
+    } catch (error) {
+      logger.error('Login error', error);
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/auth/me
+   * Returns the authenticated user's profile.
+   */
+  async getMe(req, res, next) {
+    try {
+      const User = require('./auth.model');
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        const ApiError = require('../../shared/apiError');
+        return next(ApiError.notFound('User not found.'));
       }
-
-      const {
-        email,
-        otp,
-      } = req.body;
-
-      const user =
-        await authService.verifyOtp(
-          email,
-          otp
-        );
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Account verified successfully",
-        data: user,
-      });
+      return ApiResponse.success(res, 'User profile fetched.', user.toJSON(), 200);
     } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message:
-          error.message,
-      });
+      logger.error('GetMe error', error);
+      next(error);
     }
-  };
-
-/* =========================
-   LOGIN
-========================= */
-
-const login = async (
-  req,
-  res
-) => {
-  try {
-    const errors =
-      validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors:
-          errors.array(),
-      });
-    }
-
-    const {
-      email,
-      password,
-    } = req.body;
-
-    const result =
-      await authService.loginUser(
-        email,
-        password
-      );
-
-    return res.status(200).json({
-      success: true,
-      message:
-        "Login successful",
-      accessToken:
-        result.accessToken,
-      refreshToken:
-        result.refreshToken,
-      user:
-        result.user,
-    });
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message:
-        error.message,
-    });
   }
-};
+}
 
-/* =========================
-   FORGOT PASSWORD
-========================= */
-
-const forgotPassword =
-  async (req, res) => {
-    try {
-      const {
-        email,
-      } = req.body;
-
-      const result =
-        await authService.forgotPassword(
-          email
-        );
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Password reset link generated successfully",
-        resetToken:
-          result.resetToken,
-      });
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-
-/* =========================
-   RESET PASSWORD
-========================= */
-
-const resetPassword =
-  async (req, res) => {
-    try {
-      const {
-        token,
-        newPassword,
-      } = req.body;
-
-      await authService.resetPassword(
-        token,
-        newPassword
-      );
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Password reset successfully",
-      });
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-
-/* =========================
-   LOGOUT
-========================= */
-
-const logout =
-  async (req, res) => {
-    try {
-      await authService.logoutUser(
-        req.user.id
-      );
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Logout successful",
-      });
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-
-module.exports = {
-  register,
-  verifyOtp,
-  login,
-  forgotPassword,
-  resetPassword,
-  logout,
-};
+module.exports = new AuthController();
