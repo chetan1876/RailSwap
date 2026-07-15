@@ -4,6 +4,16 @@ const router = express.Router();
 
 const authController = require("./auth.controller");
 
+const authMiddleware = require(
+  "../../middleware/auth.middleware"
+);
+
+/*
+=============================
+PUBLIC ROUTES
+=============================
+*/
+
 router.post(
   "/register",
   authController.register
@@ -14,14 +24,16 @@ router.post(
   authController.login
 );
 
-router.post(
-  "/verify-otp",
-  authController.verifyOtp
-);
+/*
+=============================
+PROTECTED ROUTES
+=============================
+*/
 
-router.post(
-  "/forgot-password",
-  authController.forgotPassword
+router.get(
+  "/profile",
+  authMiddleware,
+  authController.getProfile
 );
 
 module.exports = router;

@@ -32,20 +32,23 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await authAPI.login({
-        email: formData.email,
-        password: formData.password,
-      });
+  const res = await authAPI.login({
+    email: formData.email,
+    password: formData.password,
+  });
 
-      const { user, accessToken } = res.data.data;
-      login(user, accessToken);
-      navigate("/dashboard");
-    } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        "Login failed. Please check your credentials and try again.";
-      setError(msg);
-    } finally {
+  const { user, token } = res.data;
+
+  login(user, token);
+
+  navigate("/dashboard");
+} catch (err) {
+  const msg =
+    err.response?.data?.message ||
+    "Login failed. Please check your credentials and try again.";
+
+  setError(msg);
+}finally {
       setIsLoading(false);
     }
   };

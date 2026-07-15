@@ -1,15 +1,15 @@
-const authService = require("./auth.service");
+const jwt = require("jsonwebtoken");
+const User = require("./auth.model");
 
 /*
-========================================
+=================================
 REGISTER
-========================================
+=================================
 */
 
 const register = async (
   req,
-  res,
-  next
+  res
 ) => {
   try {
     const {
@@ -17,73 +17,52 @@ const register = async (
       email,
       phoneNumber,
       password,
-      gender,
     } = req.body;
 
-    const result =
-      await authService.registerUser(
+    const existingUser =
+      await User.findOne({
+        email,
+      });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "User already exists",
+      });
+    }
+
+    const user =
+      await User.create({
         fullName,
         email,
         phoneNumber,
         password,
-        gender
-      );
+      });
 
     res.status(201).json({
       success: true,
       message:
-        "User registered successfully",
-      data: result,
+        "Registration successful",
     });
   } catch (error) {
-    next(error);
-  }
-};
-
-/*
-========================================
-VERIFY OTP
-========================================
-*/
-
-const verifyOtp = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const {
-      email,
-      otp,
-    } = req.body;
-
-    const result =
-      await authService.verifyOtp(
-        email,
-        otp
-      );
-
-    res.status(200).json({
-      success: true,
+    res.status(500).json({
+      success: false,
       message:
-        "OTP verified successfully",
-      data: result,
+        error.message,
     });
-  } catch (error) {
-    next(error);
   }
 };
 
 /*
-========================================
+=================================
 LOGIN
-========================================
+=================================
 */
 
 const login = async (
   req,
-  res,
-  next
+  res
 ) => {
   try {
     const {
@@ -91,127 +70,99 @@ const login = async (
       password,
     } = req.body;
 
-    const result =
-      await authService.loginUser(
+    const user =
+      await User.findOne({
         email,
+      }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Please register first",
+      });
+    }
+
+    const isMatch =
+      await user.comparePassword(
         password
+      );
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Invalid password",
+      });
+    }
+
+    const token =
+      jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
       );
 
     res.status(200).json({
       success: true,
       message:
         "Login successful",
-      data: result,
+      token,
+      user: {
+        id: user._id,
+        fullName:
+          user.fullName,
+        email:
+          user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      success: false,
+      message:
+        error.message,
+    });
   }
 };
 
 /*
-========================================
-FORGOT PASSWORD
-========================================
+=================================
+GET PROFILE
+=================================
 */
 
-const forgotPassword =
+const getProfile =
   async (
     req,
-    res,
-    next
+    res
   ) => {
     try {
-      const { email } =
-        req.body;
-
-      const result =
-        await authService.forgotPassword(
-          email
+      const user =
+        await User.findById(
+          req.user.id
         );
 
-      res.status(200).json({
+      res.json({
         success: true,
-        message:
-          "Password reset token generated",
-        data: result,
+        user,
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
     }
   };
 
-/*
-========================================
-LOGOUT
-========================================
-*/
-
-const logout = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const result =
-      await authService.logoutUser(
-        req.user.id
-      );
-
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/*
-========================================
-GET CURRENT USER
-========================================
-*/
-
-const getMe = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const User =
-      require(
-        "./auth.model"
-      );
-
-    const user =
-      await User.findById(
-        req.user.id
-      );
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message:
-            "User not found",
-        });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   register,
-  verifyOtp,
   login,
-  forgotPassword,
-  logout,
-  getMe,
+  getProfile,
 };
