@@ -7,7 +7,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   const [showMenu, setShowMenu] = useState(false);
-
+       
   return (
     <nav className="navbar">
       <div className="navbar-left">
@@ -40,12 +40,14 @@ const Navbar = () => {
               }
             >
               <img
-                src="https://ui-avatars.com/api/?name=User"
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  user?.fullName || "User"
+                )}`}
                 alt="profile"
               />
 
               <span>
-                {user?.name || "User"}
+                {user?.fullName || "User"}
               </span>
 
               <i className="fa-solid fa-chevron-down"></i>
