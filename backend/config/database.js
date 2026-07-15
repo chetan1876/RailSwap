@@ -14,7 +14,6 @@ const connectDatabase = async () => {
       "❌ MongoDB Connection Failed:",
       error.message
     );
-
     process.exit(1);
   }
 };
