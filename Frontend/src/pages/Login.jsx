@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { authAPI } from "../services/chatbot.service";
 import "../styles/auth.css";
 
 const Login = () => {
@@ -13,115 +14,119 @@ const Login = () => {
     remember: false,
   });
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } =
-      e.target;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
+      [name]: type === "checkbox" ? checked : value,
     });
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    login({
-      name: "RailSwap User",
-      email: formData.email,
-      phone: "9876543210",
-    });
+    try {
+      const res = await authAPI.login({
+        email: formData.email,
+        password: formData.password,
+      });
 
-    navigate("/profile");
+      const { user, accessToken } = res.data.data;
+      login(user, accessToken);
+      navigate("/dashboard");
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        "Login failed. Please check your credentials and try again.";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-
         <h1>Welcome Back</h1>
+        <p>Login to access your RailSwap account.</p>
 
-        <p>
-          Login to access your RailSwap
-          account.
-        </p>
+        {error && (
+          <div
+            className="auth-error"
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: "8px",
+              padding: "10px 14px",
+              marginBottom: "16px",
+              color: "#dc2626",
+              fontSize: "14px",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-
           <div className="form-group">
             <label>Email</label>
-
             <input
               type="email"
               name="email"
               placeholder="Enter email"
+              value={formData.email}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="form-group">
             <label>Password</label>
-
             <input
               type="password"
               name="password"
               placeholder="Enter password"
+              value={formData.password}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="auth-options">
-
             <label className="remember">
               <input
                 type="checkbox"
                 name="remember"
                 onChange={handleChange}
+                disabled={isLoading}
               />
               Remember Me
             </label>
-
-            <Link to="/forgot-password">
-              Forgot Password?
-            </Link>
-
+            <Link to="/forgot-password">Forgot Password?</Link>
           </div>
 
           <button
             type="submit"
             className="auth-btn"
+            disabled={isLoading}
+            style={{ opacity: isLoading ? 0.7 : 1 }}
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
-
         </form>
 
-        <div className="social-login">
-
-          <button>
-            <i className="fa-brands fa-google"></i>
-            Google
-          </button>
-
-          <button>
-            <i className="fa-brands fa-facebook"></i>
-            Facebook
-          </button>
-
-        </div>
-
         <p className="auth-footer">
-          Don't have an account?
-          <Link to="/register">
-            Register
-          </Link>
+          Don't have an account?{" "}
+          <Link to="/register">Register</Link>
         </p>
-
       </div>
     </div>
   );
