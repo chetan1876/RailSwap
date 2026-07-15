@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+const User = require("../users/user.model");
+
+module.exports = User;
+=======
 'use strict';
 
 const mongoose = require('mongoose');
@@ -78,3 +83,4 @@ userSchema.set('toJSON', {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
+>>>>>>> a89dd23ba17aef4ff5b1f2ced7692719b057d3c5

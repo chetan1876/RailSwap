@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { authAPI } from "../services/chatbot.service";
+import { authAPI } from "../services/auth.service";
 import "../styles/auth.css";
 
 const Login = () => {
