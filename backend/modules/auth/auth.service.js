@@ -1,4 +1,7 @@
-const User = require("../users/user.model");
+const authRepository =
+  require(
+    "./auth.repository"
+  );
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -48,12 +51,17 @@ const registerUser = async (
   password,
   gender
 ) => {
-  const existingUser = await User.findOne({
-    $or: [
-      { email },
-      { phoneNumber },
-    ],
-  });
+  const existingUser = await authRepository.findUserByEmail(email);
+
+  if (!existingUser) {
+    existingUser = await authRepository.findUserByPhoneNumber(phoneNumber);
+  }
+
+  if (existingUser) {
+    throw new Error(
+      "User already exists with email or phone number"
+    );
+  }
 
   if (existingUser) {
     throw new Error(
