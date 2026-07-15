@@ -17,16 +17,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — clear session and redirect to /login.
-// Guard against auth endpoints so a wrong-password attempt does NOT cause
-// a redirect loop (the login page itself would trigger another 401).
+// Handle 401 globally — clear session and redirect to login.
+// IMPORTANT: Skip redirect if the failing request is itself an auth endpoint
+// (login / register), otherwise wrong credentials cause a page reload loop
+// instead of showing an error message.
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     const requestUrl = error.config?.url || '';
-    const isAuthEndpoint =
-      requestUrl.includes('/api/auth/login') ||
-      requestUrl.includes('/api/auth/register');
+    const isAuthEndpoint = requestUrl.includes('/api/auth/login') ||
+                           requestUrl.includes('/api/auth/register');
 
     if (error.response?.status === 401 && !isAuthEndpoint) {
       // Expired / invalid token on a protected route → force re-login

@@ -6,36 +6,12 @@ const { logger } = require('../shared/logger');
 
 /**
  * JWT Authentication Middleware.
- *
- * Production: Verifies Bearer token in the Authorization header.
- * Development (NODE_ENV=development): If no token is provided OR the token is
- * the dev placeholder, a mock user is attached so the app works without a
- * real login session (e.g. when testing chatbot endpoints directly).
- * A real, valid JWT still works in development — this only fires when absent.
+ * Verifies the Bearer token in the Authorization header.
+ * On success, attaches decoded payload as req.user.
  */
 const authMiddleware = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    const isDev = process.env.NODE_ENV === 'development';
-
-    // ── Development fallback ─────────────────────────────────────────────────
-    // Allow requests through with a mock user when:
-    //   • No Authorization header is present, OR
-    //   • The header contains the known dev placeholder token.
-    if (isDev) {
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-      if (!token || token === 'dev-mock-access-token') {
-        req.user = {
-          id: 'dev-user-id-000000000000',
-          email: 'dev@railswap.local',
-          name: 'Dev User',
-          role: 'user',
-        };
-        logger.debug('[DEV] Auth middleware: using mock user (no valid token provided)');
-        return next();
-      }
-    }
-    // ── Production (and dev with a real token) ───────────────────────────────
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return next(ApiError.unauthorized('Access denied. No token provided.'));

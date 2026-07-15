@@ -1,10 +1,7 @@
-<<<<<<< Updated upstream
-=======
 {
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  
   "main": "src/server.js",
   "directories": {
     "doc": "docs"
@@ -41,4 +38,3 @@
     "nodemon": "^3.1.14"
   }
 }
->>>>>>> Stashed changes

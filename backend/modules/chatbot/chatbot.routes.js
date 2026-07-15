@@ -9,8 +9,7 @@ const { chatLimiter } = require('../../config/rateLimit');
 
 const router = Router();
 
-// All chatbot endpoints require a valid JWT (or dev-mode mock token).
-// The auth middleware handles NODE_ENV=development gracefully.
+// Secure all chatbot endpoints with JWT authentication
 router.use(authMiddleware);
 
 /**

@@ -3,10 +3,6 @@ import { createContext, useContext, useState } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  /**
-   * Initialise from localStorage so the session survives page refreshes.
-   * If parsing fails (corrupt data), start unauthenticated.
-   */
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem("railswap_user");
@@ -21,10 +17,8 @@ export const AuthProvider = ({ children }) => {
   });
 
   /**
-   * Call after a successful login / register API response.
-   * Stores the user profile and JWT access token in state and localStorage.
-   *
-   * @param {object} userData   - User profile object returned by the backend
+   * Login: store user profile + JWT token.
+   * @param {object} userData - User profile object
    * @param {string} accessToken - JWT access token
    */
   const login = (userData, accessToken) => {
@@ -36,7 +30,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /** Clear session state and localStorage on logout. */
   const logout = () => {
     setUser(null);
     setToken(null);
