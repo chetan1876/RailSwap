@@ -1,5 +1,4 @@
-<<<<<<< Updated upstream
-=======
+ 
 const express = require("express");
 const cors = require("cors");
 // Extension ke sath load karein taaki module easily mil sake
@@ -18,4 +17,4 @@ app.get("/", (req, res) => {
 });
 
 module.exports = app;
->>>>>>> Stashed changes
+ 
