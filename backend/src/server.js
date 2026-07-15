@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 require("dotenv").config();
 
 const app = require("./app");
@@ -13,5 +13,4 @@ app.listen(PORT, () => {
     `Server Running On Port ${PORT}`
   );
 });
-=======
->>>>>>> a89dd23ba17aef4ff5b1f2ced7692719b057d3c5
+

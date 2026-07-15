@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -34,5 +33,4 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 
 module.exports = app;
-=======
->>>>>>> a89dd23ba17aef4ff5b1f2ced7692719b057d3c5
+
