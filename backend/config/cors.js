@@ -1,9 +1,8 @@
-'use strict';
-
 const cors = require('cors');
 
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
+  process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:5174',
 ];
@@ -11,7 +10,7 @@ const allowedOrigins = [
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, curl)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || process.env.CLIENT_URL === '*') {
       callback(null, true);
     } else {
       callback(new Error(`CORS policy: Origin '${origin}' not allowed.`));

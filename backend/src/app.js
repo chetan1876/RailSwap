@@ -15,6 +15,7 @@ const errorHandler = require('../middleware/errorHandler');
 // Route modules
 const authRoutes = require('../modules/auth/auth.routes');
 const chatbotRoutes = require('../modules/chatbot/chatbot.routes');
+const pnrRoutes = require('../modules/pnr/pnr.routes');
 
 const app = express();
 
@@ -26,12 +27,10 @@ app.use(corsMiddleware);
 app.use(generalLimiter);  // General rate limiting
 
 // ─── Parsing Middleware ───────────────────────────────────────────────────────
-// IMPORTANT: express.json() MUST come before mongoSanitize() so that req.body
-// is populated and the sanitizer can actually scan it for injection operators.
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
-app.use(mongoSanitize()); // ← AFTER body parsing so req.body is defined
+app.use(mongoSanitize());
 
 // ─── Request Logging ──────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
@@ -60,6 +59,7 @@ app.get('/', (req, res) => {
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatbotRoutes);
+app.use('/api/pnr', pnrRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {

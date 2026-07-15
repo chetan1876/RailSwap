@@ -2,7 +2,6 @@
 
 const AuthService = require('./auth.service');
 const ApiResponse = require('../../shared/apiResponse');
-const ApiError = require('../../shared/apiError');
 const { logger } = require('../../shared/logger');
 
 class AuthController {
@@ -14,7 +13,7 @@ class AuthController {
       const result = await AuthService.register(req.body);
       return ApiResponse.success(res, 'Account created successfully. Welcome to RailSwap!', result, 201);
     } catch (error) {
-      logger.error('Register error', { message: error.message });
+      logger.error('Register error', error);
       next(error);
     }
   }
@@ -27,30 +26,26 @@ class AuthController {
       const result = await AuthService.login(req.body);
       return ApiResponse.success(res, 'Login successful. Welcome back!', result, 200);
     } catch (error) {
-      logger.error('Login error', { message: error.message });
+      logger.error('Login error', error);
       next(error);
     }
   }
 
   /**
-   * GET /api/auth/me  (Protected — requires valid JWT or dev mock user)
+   * GET /api/auth/me
    * Returns the authenticated user's profile.
    */
   async getMe(req, res, next) {
     try {
-      // In dev mode, req.user may be the mock user (no real DB record)
-      if (process.env.NODE_ENV === 'development' && req.user?.id === 'dev-user-id-000000000000') {
-        return ApiResponse.success(res, 'User profile fetched.', req.user, 200);
-      }
-
       const User = require('./auth.model');
       const user = await User.findById(req.user.id);
       if (!user) {
+        const ApiError = require('../../shared/apiError');
         return next(ApiError.notFound('User not found.'));
       }
       return ApiResponse.success(res, 'User profile fetched.', user.toJSON(), 200);
     } catch (error) {
-      logger.error('GetMe error', { message: error.message });
+      logger.error('GetMe error', error);
       next(error);
     }
   }

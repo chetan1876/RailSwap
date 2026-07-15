@@ -26,17 +26,29 @@ const loginSchema = Joi.object({
 });
 
 /**
- * POST /api/auth/register
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
  */
 router.post('/register', validate(registerSchema, 'body'), AuthController.register);
 
 /**
- * POST /api/auth/login
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: User login
+ *     tags: [Auth]
  */
 router.post('/login', validate(loginSchema, 'body'), AuthController.login);
 
 /**
- * GET /api/auth/me  (Protected)
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get authenticated user profile
+ *     tags: [Auth]
  */
 router.get('/me', authMiddleware, AuthController.getMe);
 

@@ -1,10 +1,5 @@
-'use strict';
-
 const rateLimit = require('express-rate-limit');
 
-/**
- * General API rate limiter: 100 requests per 15 minutes per IP.
- */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
@@ -12,15 +7,11 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many requests from this IP. Please try again after 15 minutes.',
+    message: 'Too many requests. Please try again later.',
   },
   skip: (req) => req.path === '/health',
 });
 
-/**
- * Chat-specific rate limiter: 20 messages per minute per IP.
- * Prevents AI API abuse.
- */
 const chatLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 20,
@@ -32,4 +23,6 @@ const chatLimiter = rateLimit({
   },
 });
 
-module.exports = { generalLimiter, chatLimiter };
+module.exports = generalLimiter;
+module.exports.generalLimiter = generalLimiter;
+module.exports.chatLimiter = chatLimiter;
