@@ -6,8 +6,8 @@ const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const morgan = require("morgan");
 
-const authRoutes = require("../modules/auth/auth.routes");
-const userRoutes = require("../modules/users/user.routes");
+// const authRoutes = require("../modules/auth/auth.routes");
+// const userRoutes = require("../modules/users/user.routes");
 
 const app = express();
 
@@ -53,8 +53,8 @@ API ROUTES
 ========================================
 */
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+// app.use("/api/auth", authRoutes);
+// app.use("/api/users", userRoutes);
 
 /*
 ========================================
