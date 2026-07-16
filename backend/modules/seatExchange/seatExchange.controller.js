@@ -1,75 +1,100 @@
-const seatExchangeService = require('./seatExchange.service');
-const seatExchangeValidator = require('./seatExchange.validation');
-const SeatExchangeDTO = require('./seatExchange.dto');
-const SeatExchangeMapper = require('./seatExchange.mapper');
-const { MESSAGES } = require('./seatExchange.constants');
+const seatExchangeService = require("./seatExchange.service");
 
-class SeatExchangeController {
-    // 👇 Is function ka naam routes se strict match hona chahiye
-    async createRequest(req, res, next) {
-        try {
-            const dto = SeatExchangeDTO.fromRequest(req);
-            const validation = seatExchangeValidator.validateCreateRequest(dto);
-            if (!validation.isValid) {
-                return res.status(400).json({ success: false, message: validation.message });
-            }
+// Create Seat Exchange Request
+const createSeatExchangeRequest = async (req, res, next) => {
+  try {
+    const result = await seatExchangeService.createSeatExchangeRequest(req.body);
 
-            const userId = req.user ? req.user.id : "65cb1234567890abcdef1234"; // Default testing ID if auth middleware is absent
-            const result = await seatExchangeService.createExchangeRequest(userId, dto);
-            
-            return res.status(201).json({
-                success: true,
-                message: MESSAGES.CREATED,
-                data: {
-                    request: SeatExchangeMapper.toClientResponse(result.request),
-                    potentialMatches: SeatExchangeMapper.toClientResponseList(result.potentialMatches)
-                }
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
+    return res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    async acceptRequest(req, res, next) {
-        try {
-            const { requestId } = req.body;
-            const updated = await seatExchangeService.acceptExchange(requestId);
-            return res.status(200).json({
-                success: true,
-                message: MESSAGES.ACCEPTED,
-                data: SeatExchangeMapper.toClientResponse(updated)
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
+// Get All Requests
+const getAllSeatExchangeRequests = async (req, res, next) => {
+  try {
+    const result = await seatExchangeService.getAllSeatExchangeRequests();
 
-    async rejectRequest(req, res, next) {
-        try {
-            const { requestId } = req.body;
-            const updated = await seatExchangeService.rejectExchange(requestId);
-            return res.status(200).json({
-                success: true,
-                message: MESSAGES.REJECTED,
-                data: SeatExchangeMapper.toClientResponse(updated)
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    async getHistory(req, res, next) {
-        try {
-            const userId = req.user ? req.user.id : "65cb1234567890abcdef1234";
-            const history = await seatExchangeService.getHistory(userId);
-            return res.status(200).json({
-                success: true,
-                data: SeatExchangeMapper.toClientResponseList(history)
-            });
-        } catch (error) {
-            next(error);
-        }
-    }
-}
+// Get Request By ID
+const getSeatExchangeRequestById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
 
-module.exports = new SeatExchangeController(); // 👈 Express routes ko link dene ke liye export initialization
+    const result = await seatExchangeService.getSeatExchangeRequestById(id);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Find Matching Passengers
+const findMatchingPassengers = async (req, res, next) => {
+  try {
+    const result = await seatExchangeService.findMatchingPassengers(req.body);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Accept Seat Exchange
+const acceptSeatExchange = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { matchedUserId } = req.body;
+
+    const result = await seatExchangeService.acceptSeatExchange(
+      id,
+      matchedUserId
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reject Seat Exchange
+const rejectSeatExchange = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await seatExchangeService.rejectSeatExchange(id);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Cancel Seat Exchange
+const cancelSeatExchange = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await seatExchangeService.cancelSeatExchange(id);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  createSeatExchangeRequest,
+  getAllSeatExchangeRequests,
+  getSeatExchangeRequestById,
+  findMatchingPassengers,
+  acceptSeatExchange,
+  rejectSeatExchange,
+  cancelSeatExchange,
+};
