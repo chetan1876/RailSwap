@@ -21,14 +21,20 @@ const Profile = () => {
           <div className="profile-top">
             <img
               src={`https://ui-avatars.com/api/?name=${
-                user?.name || "RailSwap User"
+                encodeURIComponent(
+                  user?.fullName || "RailSwap User"
+                )
               }&background=2563EB&color=fff&size=128`}
               alt="Profile"
             />
 
             <div>
-              <h2>{user?.name || "RailSwap User"}</h2>
-              <p>Verified Passenger</p>
+              <h2>{user?.fullName || "RailSwap User"}</h2>
+              <p>
+                {user?.role === "ADMIN"
+                  ? "Administrator"
+                  : "Verified Passenger"}
+              </p>
             </div>
           </div>
 
@@ -36,17 +42,39 @@ const Profile = () => {
 
             <div className="detail-box">
               <span>Full Name</span>
-              <h4>{user?.name || "RailSwap User"}</h4>
+              <h4>
+                {user?.fullName || "Not Available"}
+              </h4>
             </div>
 
             <div className="detail-box">
               <span>Email Address</span>
-              <h4>{user?.email || "railswap@gmail.com"}</h4>
+              <h4>
+                {user?.email || "Not Available"}
+              </h4>
             </div>
 
             <div className="detail-box">
               <span>Mobile Number</span>
-              <h4>{user?.phone || "+91 9876543210"}</h4>
+              <h4>
+                {user?.phoneNumber || "Not Added"}
+              </h4>
+            </div>
+
+            <div className="detail-box">
+              <span>Role</span>
+              <h4>
+                {user?.role || "USER"}
+              </h4>
+            </div>
+
+            <div className="detail-box">
+              <span>Account Status</span>
+              <h4>
+                {user?.isVerified
+                  ? "Verified"
+                  : "Pending Verification"}
+              </h4>
             </div>
 
           </div>

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+
 import { authAPI } from "../services/auth.service";
 import "../styles/auth.css";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -30,41 +30,49 @@ const Register = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+  if (formData.password.length < 6) {
+    setError("Password must be at least 6 characters.");
+    return;
+  }
 
-    setIsLoading(true);
+  if (!formData.terms) {
+    setError("Please accept Terms & Conditions.");
+    return;
+  }
 
-    try {
-      const res = await authAPI.register({
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-      });
+  setIsLoading(true);
 
-      const { user, accessToken } = res.data.data;
-      login(user, accessToken);
-      navigate("/dashboard");
-    } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        "Registration failed. Please try again.";
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    await authAPI.register({
+      fullName: formData.fullName,
+      email: formData.email,
+      phoneNumber: formData.phone,
+      password: formData.password,
+    });
+
+    alert(
+      "Registration successful. Please login to continue."
+    );
+
+    navigate("/login");
+  } catch (err) {
+    const msg =
+      err.response?.data?.message ||
+      "Registration failed. Please try again.";
+
+    setError(msg);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="auth-page">

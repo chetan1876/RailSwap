@@ -1,20 +1,40 @@
-const authRepository =
-  require(
-    "./auth.repository"
-  );
+const authRepository = require("./auth.repository");
 const otpGenerator = require("otp-generator");
+const jwt = require("jsonwebtoken");
+const User = require("./auth.model");
 
-const bcrypt = require("bcryptjs");
+/* ===========================
+   TOKEN HELPERS
+=========================== */
 
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn:
+        process.env.JWT_EXPIRE || "15m",
+    }
+  );
+};
 
-
-const User = require('./auth.model');
-const ApiError = require('../../shared/apiError');
-const { logger } = require('../../shared/logger');
-
-
-
-
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn:
+        process.env
+          .REFRESH_TOKEN_EXPIRE ||
+        "7d",
+    }
+  );
+};
 
 /* ===========================
    REGISTER USER
@@ -27,10 +47,16 @@ const registerUser = async (
   password,
   gender
 ) => {
-  const existingUser = await authRepository.findUserByEmail(email);
+  let existingUser =
+    await authRepository.findUserByEmail(
+      email
+    );
 
   if (!existingUser) {
-    existingUser = await authRepository.findUserByPhoneNumber(phoneNumber);
+    existingUser =
+      await authRepository.findUserByPhoneNumber(
+        phoneNumber
+      );
   }
 
   if (existingUser) {
@@ -39,31 +65,30 @@ const registerUser = async (
     );
   }
 
-  if (existingUser) {
-    throw new Error(
-      "User already exists with email or phone number"
-    );
-  }
-
-  const otp = otpGenerator.generate(6, {
-    upperCaseAlphabets: false,
-    lowerCaseAlphabets: false,
-    specialChars: false,
-    digits: true,
-  });
+  const otp =
+    otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+      digits: true,
+    });
 
   const otpExpiry =
-    new Date(Date.now() + 10 * 60 * 1000);
+    new Date(
+      Date.now() +
+        10 * 60 * 1000
+    );
 
-  const user = await User.create({
-    fullName,
-    email,
-    phoneNumber,
-    password,
-    gender,
-    otp,
-    otpExpiry,
-  });
+  const user =
+    await User.create({
+      fullName,
+      email,
+      phoneNumber,
+      password,
+      gender,
+      otp,
+      otpExpiry,
+    });
 
   return {
     user,
@@ -79,24 +104,34 @@ const verifyOtp = async (
   email,
   enteredOtp
 ) => {
-  const user = await User.findOne({
-    email,
-  }).select("+otp +otpExpiry");
+  const user =
+    await User.findOne({
+      email,
+    }).select(
+      "+otp +otpExpiry"
+    );
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(
+      "User not found"
+    );
   }
 
   if (
     user.otp !== enteredOtp
   ) {
-    throw new Error("Invalid OTP");
+    throw new Error(
+      "Invalid OTP"
+    );
   }
 
   if (
-    user.otpExpiry < new Date()
+    user.otpExpiry <
+    new Date()
   ) {
-    throw new Error("OTP expired");
+    throw new Error(
+      "OTP expired"
+    );
   }
 
   user.isVerified = true;
@@ -118,11 +153,12 @@ const loginUser = async (
   email,
   password
 ) => {
-  const user = await User.findOne({
-    email,
-  }).select(
-    "+password +refreshToken"
-  );
+  const user =
+    await User.findOne({
+      email,
+    }).select(
+      "+password +refreshToken"
+    );
 
   if (!user) {
     throw new Error(
@@ -130,7 +166,9 @@ const loginUser = async (
     );
   }
 
-  if (!user.isVerified) {
+  if (
+    !user.isVerified
+  ) {
     throw new Error(
       "Please verify your account first"
     );
@@ -141,17 +179,23 @@ const loginUser = async (
       password
     );
 
-  if (!isPasswordMatched) {
+  if (
+    !isPasswordMatched
+  ) {
     throw new Error(
       "Invalid credentials"
     );
   }
 
   const accessToken =
-    generateAccessToken(user);
+    generateAccessToken(
+      user
+    );
 
   const refreshToken =
-    generateRefreshToken(user);
+    generateRefreshToken(
+      user
+    );
 
   user.refreshToken =
     refreshToken;
@@ -192,7 +236,8 @@ const forgotPassword =
         },
         process.env.JWT_SECRET,
         {
-          expiresIn: "15m",
+          expiresIn:
+            "15m",
         }
       );
 
@@ -202,7 +247,9 @@ const forgotPassword =
     user.passwordResetExpiry =
       new Date(
         Date.now() +
-          15 * 60 * 1000
+          15 *
+            60 *
+            1000
       );
 
     await user.save();
@@ -210,9 +257,43 @@ const forgotPassword =
     return {
       user,
       resetToken,
-
     };
+  };
 
-}
+/* ===========================
+   LOGOUT USER
+=========================== */
 
-module.exports = new AuthService();
+const logoutUser =
+  async (userId) => {
+    const user =
+      await User.findById(
+        userId
+      ).select(
+        "+refreshToken"
+      );
+
+    if (!user) {
+      throw new Error(
+        "User not found"
+      );
+    }
+
+    user.refreshToken =
+      null;
+
+    await user.save();
+
+    return {
+      message:
+        "Logout successful",
+    };
+  };
+
+module.exports = {
+  registerUser,
+  verifyOtp,
+  loginUser,
+  forgotPassword,
+  logoutUser,
+};

@@ -1,54 +1,167 @@
-'use strict';
+const jwt = require("jsonwebtoken");
+const User = require("./auth.model");
 
-const AuthService = require('./auth.service');
-const ApiResponse = require('../../shared/apiResponse');
-const { logger } = require('../../shared/logger');
+/*
+=================================
+REGISTER
+=================================
+*/
 
-class AuthController {
-  /**
-   * POST /api/auth/register
-   */
-  async register(req, res, next) {
-    try {
-      const result = await AuthService.register(req.body);
-      return ApiResponse.success(res, 'Account created successfully. Welcome to RailSwap!', result, 201);
-    } catch (error) {
-      logger.error('Register error', error);
-      next(error);
+const register = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      password,
+    } = req.body;
+
+    const existingUser =
+      await User.findOne({
+        email,
+      });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "User already exists",
+      });
     }
-  }
 
-  /**
-   * POST /api/auth/login
-   */
-  async login(req, res, next) {
-    try {
-      const result = await AuthService.login(req.body);
-      return ApiResponse.success(res, 'Login successful. Welcome back!', result, 200);
-    } catch (error) {
-      logger.error('Login error', error);
-      next(error);
+    const user =
+      await User.create({
+        fullName,
+        email,
+        phoneNumber,
+        password,
+      });
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Registration successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message:
+        error.message,
+    });
+  }
+};
+
+/*
+=================================
+LOGIN
+=================================
+*/
+
+const login = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      email,
+      password,
+    } = req.body;
+
+    const user =
+      await User.findOne({
+        email,
+      }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Please register first",
+      });
     }
-  }
 
-  /**
-   * GET /api/auth/me
-   * Returns the authenticated user's profile.
-   */
-  async getMe(req, res, next) {
-    try {
-      const User = require('./auth.model');
-      const user = await User.findById(req.user.id);
-      if (!user) {
-        const ApiError = require('../../shared/apiError');
-        return next(ApiError.notFound('User not found.'));
-      }
-      return ApiResponse.success(res, 'User profile fetched.', user.toJSON(), 200);
-    } catch (error) {
-      logger.error('GetMe error', error);
-      next(error);
+    const isMatch =
+      await user.comparePassword(
+        password
+      );
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Invalid password",
+      });
     }
-  }
-}
 
-module.exports = new AuthController();
+    const token =
+      jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message:
+        error.message,
+    });
+  }
+};
+
+/*
+=================================
+GET PROFILE
+=================================
+*/
+
+const getProfile =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const user =
+        await User.findById(
+          req.user.id
+        );
+
+      res.json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
+  };
+
+module.exports = {
+  register,
+  login,
+  getProfile,
+};

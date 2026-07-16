@@ -1,17 +1,48 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const seatExchangeController = require('./seatExchange.controller');
 
-// 1. New seat swap offer post karne aur matching engine run karne ke liye
-router.post('/request', seatExchangeController.createRequest);
+const seatExchangeController = require("./seatExchange.controller");
 
-// 2. Kisi doosre user ki match hui request ko accept karne ke liye
-router.post('/accept', seatExchangeController.acceptRequest);
+// Create Seat Exchange Request
+router.post(
+  "/request",
+  seatExchangeController.createSeatExchangeRequest
+);
 
-// 3. Match hui request ko reject karne ke liye
-router.post('/reject', seatExchangeController.rejectRequest);
+// Get All Seat Exchange Requests
+router.get(
+  "/requests",
+  seatExchangeController.getAllSeatExchangeRequests
+);
 
-// 4. User ki purani saari seat swaps ki history laane ke liye
-router.get('/history', seatExchangeController.getHistory);
+// Get Seat Exchange Request By ID
+router.get(
+  "/requests/:id",
+  seatExchangeController.getSeatExchangeRequestById
+);
 
-module.exports = router; // Express app ko handle dene ke liye sabse important line
+// Find Matching Passengers
+router.post(
+  "/find-matches",
+  seatExchangeController.findMatchingPassengers
+);
+
+// Accept Seat Exchange
+router.patch(
+  "/accept/:id",
+  seatExchangeController.acceptSeatExchange
+);
+
+// Reject Seat Exchange
+router.patch(
+  "/reject/:id",
+  seatExchangeController.rejectSeatExchange
+);
+
+// Cancel Seat Exchange
+router.patch(
+  "/cancel/:id",
+  seatExchangeController.cancelSeatExchange
+);
+
+module.exports = router;
