@@ -1,0 +1,160 @@
+import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import "../styles/sidebar.css";
+
+const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+ const featureItems = [
+  {
+    name: "Seat Exchange",
+    icon: "fa-solid fa-right-left",
+    path: "/seat-exchange",
+  },
+  {
+    name: "PNR Verification",
+    icon: "fa-solid fa-ticket",
+    path: "/pnr-verification",
+  },
+  {
+    name: "Family Linking",
+    icon: "fa-solid fa-people-group",
+    path: "/family-linking",
+  },
+  {
+    name: "QR Verification",
+    icon: "fa-solid fa-qrcode",
+    path: "/qr-verification",
+  },
+  {
+    name: "AI Recommendation",
+    icon: "fa-solid fa-robot",
+    path: "/ai-recommendation",
+  },
+  {
+    name: "Journey Companion",
+    icon: "fa-solid fa-users",
+    path: "/journey-companion",
+  },
+  {
+    name: "AI Chatbot",
+    icon: "fa-solid fa-comments",
+    path: "/chatbot",
+  },
+  {
+    name: "Coach Heatmap",
+    icon: "fa-solid fa-map",
+    path: "/coach-heatmap",
+  },
+  {
+    name: "Live Coach Map",
+    icon: "fa-solid fa-location-dot",
+    path: "/live-coach-map",
+  },
+  {
+    name: "Train Information",
+    icon: "fa-solid fa-train",
+    path: "/train-information",
+  },
+  {
+    name: "Station Navigator",
+    icon: "fa-solid fa-compass",
+    path: "/station-navigator",
+  },
+  {
+    name: "Reward System",
+    icon: "fa-solid fa-gift",
+    path: "/reward-system",
+  },
+  {
+    name: "Lost Item AI",
+    icon: "fa-solid fa-magnifying-glass",
+    path: "/lost-item-ai",
+  },
+  {
+    name: "Crowd Density",
+    icon: "fa-solid fa-chart-column",
+    path: "/crowd-density",
+  },
+  {
+    name: "Women Safety",
+    icon: "fa-solid fa-shield-halved",
+    path: "/women-safety",
+  },
+  {
+    name: "Emergency Medical",
+    icon: "fa-solid fa-briefcase-medical",
+    path: "/emergency-medical",
+  },
+];
+
+  return (
+    <>
+      <button
+        className="mobile-menu-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <i className="fa-solid fa-bars"></i>
+      </button>
+
+      <aside
+        className={`sidebar ${
+          isOpen ? "active" : ""
+        }`}
+      >
+        <div className="sidebar-menu">
+
+          <NavLink
+            to="/dashboard"
+            className="sidebar-link"
+          >
+            <i className="fa-solid fa-house"></i>
+            Dashboard
+          </NavLink>
+
+          <h4 className="sidebar-section-title">
+            FEATURES
+          </h4>
+
+          {featureItems.map((item, index) => (
+            <NavLink
+              key={index}
+              to={item.path}
+              className="sidebar-link"
+            >
+              <i className={item.icon}></i>
+              {item.name}
+            </NavLink>
+          ))}
+
+        </div>
+
+        <div className="sidebar-bottom">
+          <NavLink
+            to="/settings"
+            className="sidebar-link"
+          >
+            <i className="fa-solid fa-gear"></i>
+            Settings
+          </NavLink>
+        </div>
+      </aside>
+
+      <div className="bottom-nav">
+        <NavLink to="/dashboard">
+          <i className="fa-solid fa-house"></i>
+        </NavLink>
+
+        <NavLink to="/ai-recommendation">
+          <i className="fa-solid fa-robot"></i>
+        </NavLink>
+
+        <NavLink to="/settings">
+          <i className="fa-solid fa-gear"></i>
+        </NavLink>
+      </div>
+    </>
+  );
+};
+
+export default Sidebar;
