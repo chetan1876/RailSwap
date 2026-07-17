@@ -9,27 +9,30 @@ const authMiddleware = require(
 );
 
 /*
-=============================
+=================================
 PUBLIC ROUTES
-=============================
+=================================
 */
 
+// Register User
 router.post(
   "/register",
   authController.register
 );
 
+// Login User
 router.post(
   "/login",
   authController.login
 );
 
 /*
-=============================
+=================================
 PROTECTED ROUTES
-=============================
+=================================
 */
 
+// Get Logged In User Profile
 router.get(
   "/profile",
   authMiddleware,

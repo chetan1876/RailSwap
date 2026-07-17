@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const morgan = require("morgan");
 
-// const authRoutes = require("../modules/auth/auth.routes");
+const authRoutes = require("../modules/auth/auth.routes");
 // const userRoutes = require("../modules/users/user.routes");
 
 const app = express();
@@ -17,9 +17,6 @@ MIDDLEWARES
 ========================================
 */
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 app.use(
   cors({
     origin: [
@@ -27,12 +24,42 @@ app.use(
       "http://localhost:5174",
     ],
     credentials: true,
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+  })
+);
+
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
   })
 );
 
 app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("dev"));
+
+/*
+========================================
+API ROUTES
+========================================
+*/
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
 /*
 ========================================
@@ -53,8 +80,6 @@ API ROUTES
 ========================================
 */
 
-// app.use("/api/auth", authRoutes);
-// app.use("/api/users", userRoutes);
 
 /*
 ========================================
