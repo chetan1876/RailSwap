@@ -205,32 +205,36 @@ class WomenSafetyService {
       throw new Error("Dashboard not found");
     }
 
-    const generatedSeats = [
-      {
-        coach: "B2",
-        seatNumber: "21",
-        badge: "Safe",
-        matchPercentage: 98,
-      },
-      {
-        coach: "B2",
-        seatNumber: "24",
-        badge: "Best",
-        matchPercentage: 97,
-      },
-      {
-        coach: "B1",
-        seatNumber: "18",
-        badge: "Safe",
-        matchPercentage: 96,
-      },
-      {
-        coach: "B3",
-        seatNumber: "12",
-        badge: "Best",
-        matchPercentage: 99,
-      },
-    ];
+   const generatedSeats = [
+  {
+    id: "seat1",
+    coach: "B2",
+    seatNumber: "21",
+    badge: "Safe",
+    matchPercentage: 98,
+  },
+  {
+    id: "seat2",
+    coach: "B2",
+    seatNumber: "24",
+    badge: "Best",
+    matchPercentage: 97,
+  },
+  {
+    id: "seat3",
+    coach: "B1",
+    seatNumber: "18",
+    badge: "Safe",
+    matchPercentage: 96,
+  },
+  {
+    id: "seat4",
+    coach: "B3",
+    seatNumber: "12",
+    badge: "Best",
+    matchPercentage: 99,
+  },
+];
 
     await WomenSafetyRepository.replaceSafeSeats(
       userId,
@@ -249,34 +253,35 @@ class WomenSafetyService {
     if (!dashboard) {
       throw new Error("Dashboard not found");
     }
+const companion = {
 
-    const companion = {
+  id: Date.now().toString(),
 
-      name: payload.name,
+  name: payload.name,
 
-      age: payload.age,
+  age: payload.age,
 
-      verified: true,
+  verified: true,
 
-      matchPercentage: payload.matchPercentage,
+  matchPercentage: payload.matchPercentage,
 
-      coach: payload.coach,
+  coach: payload.coach,
 
-      seatNumber: payload.seatNumber,
+  seatNumber: payload.seatNumber,
 
-      trainNumber: payload.trainNumber,
+  trainNumber: payload.trainNumber,
 
-      trainName: payload.trainName,
+  trainName: payload.trainName,
 
-      sourceStation: payload.sourceStation,
+  sourceStation: payload.sourceStation,
 
-      destinationStation: payload.destinationStation,
+  destinationStation: payload.destinationStation,
 
-      trustScore: payload.trustScore,
+  trustScore: payload.trustScore,
 
-      profileImage: payload.profileImage || "",
+  profileImage: payload.profileImage || "",
 
-    };
+};
 
     const updated =
       await WomenSafetyRepository.addCompanion(
