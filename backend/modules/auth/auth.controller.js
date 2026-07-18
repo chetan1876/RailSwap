@@ -1,12 +1,12 @@
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { db } = require("../../config/firebase");
-const bcrypt = require("bcryptjs");
+
 /*
 =================================
 REGISTER
 =================================
 */
-
 
 const register = async (req, res) => {
   try {
@@ -16,6 +16,18 @@ const register = async (req, res) => {
       phoneNumber,
       password,
     } = req.body;
+
+    if (
+      !fullName ||
+      !email ||
+      !phoneNumber ||
+      !password
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
 
     const userRef = db
       .collection("users")
@@ -27,8 +39,7 @@ const register = async (req, res) => {
     if (existingUser.exists) {
       return res.status(400).json({
         success: false,
-        message:
-          "User already exists",
+        message: "User already exists",
       });
     }
 
@@ -38,7 +49,7 @@ const register = async (req, res) => {
         10
       );
 
-    await userRef.set({
+    const userData = {
       fullName,
       email,
       phoneNumber,
@@ -47,14 +58,41 @@ const register = async (req, res) => {
       role: "USER",
       createdAt:
         new Date(),
-    });
+    };
+
+    await userRef.set(
+      userData
+    );
+
+    const token =
+      jwt.sign(
+        {
+          email,
+          role: "USER",
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn:
+            "7d",
+        }
+      );
 
     return res.status(201).json({
       success: true,
-      message:
-        "Registration successful",
+      token,
+      user: {
+        fullName,
+        email,
+        phoneNumber,
+        role: "USER",
+      },
     });
   } catch (error) {
+    console.error(
+      "REGISTER ERROR:",
+      error
+    );
+
     return res.status(500).json({
       success: false,
       message:
@@ -62,7 +100,6 @@ const register = async (req, res) => {
     });
   }
 };
-
 
 /*
 =================================
@@ -87,7 +124,7 @@ const login = async (req, res) => {
       return res.status(404).json({
         success: false,
         message:
-          "Please register first",
+          "User not found",
       });
     }
 
@@ -138,6 +175,11 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(
+      "LOGIN ERROR:",
+      error
+    );
+
     return res.status(500).json({
       success: false,
       message:
@@ -146,43 +188,7 @@ const login = async (req, res) => {
   }
 };
 
-/*
-=================================
-GET PROFILE
-=================================
-*/
-
-const getProfile =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const userDoc =
-        await db
-          .collection("users")
-          .doc(
-            req.user.email
-          )
-          .get();
-
-      return res.json({
-        success: true,
-        user:
-          userDoc.data(),
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
-
-
 module.exports = {
   register,
   login,
-  getProfile,
 };
