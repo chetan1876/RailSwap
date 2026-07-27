@@ -1,46 +1,51 @@
-'use strict';
-
 class ApiError extends Error {
-  /**
-   * @param {number} statusCode
-   * @param {string} message
-   * @param {*} details
-   */
-  constructor(statusCode, message, details = null) {
-    super(message);
-    this.statusCode = statusCode;
-    this.details = details;
-    this.isOperational = true;
-    Error.captureStackTrace(this, this.constructor);
-  }
+    constructor(
+        statusCode = 500,
+        message = "Internal Server Error",
+        errors = [],
+        stack = ""
+    ) {
+        super(message);
 
-  static badRequest(message = 'Bad Request', details = null) {
-    return new ApiError(400, message, details);
-  }
+        this.success = false;
+        this.statusCode = statusCode;
+        this.message = message;
+        this.errors = errors;
 
-  static unauthorized(message = 'Unauthorized. Please log in.') {
-    return new ApiError(401, message);
-  }
+        if (stack) {
+            this.stack = stack;
+        } else {
+            Error.captureStackTrace(this, this.constructor);
+        }
+    }
 
-  static forbidden(message = 'Access denied.') {
-    return new ApiError(403, message);
-  }
+    static badRequest(message = "Bad Request", errors = []) {
+        return new ApiError(400, message, errors);
+    }
 
-  static notFound(message = 'Resource not found.') {
-    return new ApiError(404, message);
-  }
+    static unauthorized(message = "Unauthorized") {
+        return new ApiError(401, message);
+    }
 
-  static conflict(message = 'Resource already exists.') {
-    return new ApiError(409, message);
-  }
+    static forbidden(message = "Forbidden") {
+        return new ApiError(403, message);
+    }
 
-  static tooManyRequests(message = 'Too many requests. Please wait and try again.') {
-    return new ApiError(429, message);
-  }
+    static notFound(message = "Resource Not Found") {
+        return new ApiError(404, message);
+    }
 
-  static internal(message = 'Internal server error.', details = null) {
-    return new ApiError(500, message, details);
-  }
+    static conflict(message = "Resource Already Exists") {
+        return new ApiError(409, message);
+    }
+
+    static validation(message = "Validation Failed", errors = []) {
+        return new ApiError(422, message, errors);
+    }
+
+    static internal(message = "Internal Server Error") {
+        return new ApiError(500, message);
+    }
 }
 
 module.exports = ApiError;

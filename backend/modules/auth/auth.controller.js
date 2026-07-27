@@ -1,194 +1,281 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { db } = require("../../config/firebase");
+const authService = require("./auth.service");
 
-/*
-=================================
-REGISTER
-=================================
-*/
+/* =====================================================
+                    REGISTER
+===================================================== */
 
-const register = async (req, res) => {
-  try {
-    const {
-      fullName,
-      email,
-      phoneNumber,
-      password,
-    } = req.body;
+const register = async (req, res, next) => {
 
-    if (
-      !fullName ||
-      !email ||
-      !phoneNumber ||
-      !password
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
+    try {
+
+        const response =
+            await authService.register(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
     }
 
-    const userRef = db
-      .collection("users")
-      .doc(email);
+    catch (error) {
 
-    const existingUser =
-      await userRef.get();
+        next(error);
 
-    if (existingUser.exists) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
     }
 
-    const hashedPassword =
-      await bcrypt.hash(
-        password,
-        10
-      );
-
-    const userData = {
-      fullName,
-      email,
-      phoneNumber,
-      password:
-        hashedPassword,
-      role: "USER",
-      createdAt:
-        new Date(),
-    };
-
-    await userRef.set(
-      userData
-    );
-
-    const token =
-      jwt.sign(
-        {
-          email,
-          role: "USER",
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn:
-            "7d",
-        }
-      );
-
-    return res.status(201).json({
-      success: true,
-      token,
-      user: {
-        fullName,
-        email,
-        phoneNumber,
-        role: "USER",
-      },
-    });
-  } catch (error) {
-    console.error(
-      "REGISTER ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        error.message,
-    });
-  }
 };
 
-/*
-=================================
-LOGIN
-=================================
-*/
+/* =====================================================
+                    VERIFY OTP
+===================================================== */
 
-const login = async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-    } = req.body;
+const verifyOTP = async (req, res, next) => {
 
-    const userDoc =
-      await db
-        .collection("users")
-        .doc(email)
-        .get();
+    try {
 
-    if (!userDoc.exists) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "User not found",
-      });
+        const response =
+            await authService.verifyOTP(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
     }
 
-    const user =
-      userDoc.data();
+    catch (error) {
 
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
+        next(error);
 
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Invalid password",
-      });
     }
 
-    const token =
-      jwt.sign(
-        {
-          email:
-            user.email,
-          role:
-            user.role,
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn:
-            "7d",
-        }
-      );
+};
 
-    return res.status(200).json({
-      success: true,
-      token,
-      user: {
-        fullName:
-          user.fullName,
-        email:
-          user.email,
-        phoneNumber:
-          user.phoneNumber,
-        role:
-          user.role,
-      },
-    });
-  } catch (error) {
-    console.error(
-      "LOGIN ERROR:",
-      error
-    );
+/* =====================================================
+                    RESEND OTP
+===================================================== */
 
-    return res.status(500).json({
-      success: false,
-      message:
-        error.message,
-    });
-  }
+const resendOTP = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.resendOTP(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                FORGOT PASSWORD
+===================================================== */
+
+const forgotPassword = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.forgotPassword(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+            VERIFY RESET OTP
+===================================================== */
+
+const verifyResetOTP = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.verifyResetOTP(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                RESET PASSWORD
+===================================================== */
+
+const resetPassword = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.resetPassword(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                        LOGIN
+===================================================== */
+
+const login = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.login(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                    GOOGLE LOGIN
+===================================================== */
+
+const googleLogin = async (req, res, next) => {
+
+    try {
+
+        const { idToken } = req.body;
+
+        const response =
+            await authService.googleLogin(idToken);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                REFRESH TOKEN
+===================================================== */
+
+const refreshToken = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.refreshToken(req.body);
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
+};
+
+/* =====================================================
+                    LOGOUT
+===================================================== */
+
+const logout = async (req, res, next) => {
+
+    try {
+
+        const response =
+            await authService.logout({
+
+                uid: req.user.uid,
+
+            });
+
+        return res
+            .status(response.statusCode)
+            .json(response);
+
+    }
+
+    catch (error) {
+
+        next(error);
+
+    }
+
 };
 
 module.exports = {
-  register,
-  login,
+
+    register,
+
+    verifyOTP,
+
+    resendOTP,
+
+    forgotPassword,
+
+    verifyResetOTP,
+
+    resetPassword,
+
+    login,
+
+    googleLogin,
+
+    refreshToken,
+
+    logout,
+
 };

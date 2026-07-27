@@ -1,445 +1,590 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { authAPI } from "../services/auth.service";
+import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
+
+import { authAPI } from "../services/auth.service";
 import "../styles/auth.css";
 
-const Register = () => {
+function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  /* =====================================================
+                      STATES
+  ===================================================== */
 
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
-    terms: false,
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [errors, setErrors] = useState({});
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
+
+  // Part 2 me use hoga
+  const [showOTPBox, setShowOTPBox] =
+    useState(false);
+
+  const [otp, setOtp] = useState("");
+  
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  /* =====================================================
+                  INPUT CHANGE
+  ===================================================== */
 
   const handleChange = (e) => {
-    const { name, value, checked, type } = e.target;
+  const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+  // Full Name
+  if (name === "fullName") {
+    if (!/^[A-Za-z\s]*$/.test(value)) return;
+    if (value.length > 50) return;
+  }
 
-    setErrors({
-      ...errors,
-      [name]: "",
-    });
-  };
+  // Email
+  if (name === "email") {
+    if (!/^[A-Za-z0-9@._-]*$/.test(value)) return;
+    if (value.length > 100) return;
+  }
 
-  const validateForm = () => {
-    const newErrors = {};
+  // Phone Number
+  if (name === "phoneNumber") {
+    if (!/^\d*$/.test(value)) return;
+    if (value.length > 10) return;
+  }
 
-    const nameRegex = /^[A-Za-z ]{3,50}$/;
-    const phoneRegex = /^[6-9]\d{9}$/;
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+  // Password Validation
+if (name === "password" || name === "confirmPassword") {
 
-    if (!nameRegex.test(formData.fullName)) {
-      newErrors.fullName =
-        "Name must contain only letters and spaces (3-50 chars)";
+  // Maximum 20 characters
+  if (value.length > 20) {
+    return;
+  }
+
+}
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  setError("");
+};
+
+  /* =====================================================
+                REGISTER SUBMIT
+  ===================================================== */
+
+  const handleRegister = async (e) => {
+
+  e.preventDefault();
+
+  setError("");
+  setSuccess("");
+
+  // Check all fields
+  if (
+    !formData.fullName ||
+    !formData.email ||
+    !formData.phoneNumber ||
+    !formData.password ||
+    !formData.confirmPassword
+  ) {
+    setError("Please fill all fields.");
+    return;
+  }
+
+  // Email Validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(formData.email.trim())) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  if (!/^[6-9]\d{9}$/.test(formData.phoneNumber)) {
+    setError("Please enter a valid 10-digit Indian mobile number.");
+    return;
+  }
+  // Password Validation
+const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()_\-+=])[A-Za-z\d@$!%*?&^#()_\-+=]{8,20}$/;
+
+if (!passwordRegex.test(formData.password)) {
+
+  setError(
+    "Password must be 8-20 characters and include uppercase, lowercase, number and special character."
+  );
+
+  return;
+
+}
+  
+  // Password Match
+  if (formData.password !== formData.confirmPassword) {
+  setError("Passwords do not match.");
+  return;
+}
+
+  try {
+
+    setLoading(true);
+
+    const response = await authAPI.register(formData);
+
+    if (response.success) {
+
+      setSuccess(
+        response.message ||
+        "Registration successful. OTP has been sent to your email."
+      );
+
+      setShowOTPBox(true);
+
+    } else {
+
+      setError(
+        response.message ||
+        "Registration failed."
+      );
+
     }
 
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        formData.email
-      )
-    ) {
-      newErrors.email =
-        "Please enter a valid email address";
-    }
+  } catch (error) {
 
-    if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone =
-        "Enter valid 10 digit Indian mobile number";
-    }
-
-    if (
-      !passwordRegex.test(
-        formData.password
-      )
-    ) {
-      newErrors.password =
-        "Password must contain uppercase, lowercase, number and special character";
-    }
-
-    if (
-      formData.password !==
-      formData.confirmPassword
-    ) {
-      newErrors.confirmPassword =
-        "Passwords do not match";
-    }
-
-    if (!formData.terms) {
-      newErrors.terms =
-        "Please accept Terms & Conditions";
-    }
-
-    setErrors(newErrors);
-
-    return (
-      Object.keys(newErrors)
-        .length === 0
+    setError(
+      error.message ||
+      "Something went wrong."
     );
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  } finally {
 
-    if (!validateForm()) {
+    setLoading(false);
+
+  }
+
+};
+
+const handleGoogleRegister = async (credentialResponse) => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const response = await authAPI.googleLogin(
+      credentialResponse.credential
+    );
+
+    if (!response.success) {
+      setError(response.message);
       return;
     }
 
-    setIsLoading(true);
+    login(response.data);
 
-    try {
-      const res =
-        await authAPI.register({
-          fullName:
-            formData.fullName,
-          email:
-            formData.email,
-          phoneNumber:
-            formData.phone,
-          password:
-            formData.password,
-        });
+    navigate("/dashboard");
 
-      /*
-      Backend register response:
-      {
-        token,
-        user
-      }
-      */
+  } catch (error) {
 
-      const user =
-        res.data.user;
+    setError(
+      error.response?.data?.message ||
+      error.message ||
+      "Google Registration Failed."
+    );
 
-      const token =
-        res.data.token;
+  } finally {
+    setLoading(false);
+  }
+};
 
-      if (
-        user &&
-        token
-      ) {
-        login(
-          user,
-          token
-        );
-      }
 
-      navigate(
-        "/dashboard"
+  /* =====================================================
+                VERIFY OTP
+===================================================== */
+
+const handleVerifyOTP = async (e) => {
+
+  e.preventDefault();
+
+  setError("");
+  setSuccess("");
+
+  if (!otp) {
+    setError("Please enter OTP.");
+    return;
+  }
+
+  try {
+
+    setLoading(true);
+
+    const verifyResponse = await authAPI.verifyOtp({
+      email: formData.email,
+      otp,
+    });
+
+    if (!verifyResponse.success) {
+
+      setError(
+        verifyResponse.message ||
+        "OTP verification failed."
       );
-    } catch (err) {
-      setErrors({
-        general:
-          err.response?.data
-            ?.message ||
-          "Registration failed",
-      });
-    } finally {
-      setIsLoading(false);
+
+      return;
     }
-  };
+
+    const loginResponse = await authAPI.login({
+      email: formData.email,
+      password: formData.password,
+    });
+
+    if (!loginResponse.success) {
+
+      setError(
+        loginResponse.message ||
+        "Login failed."
+      );
+
+      return;
+    }
+
+    login(loginResponse.data);
+
+    navigate("/dashboard");
+
+  } catch (error) {
+
+    setError(
+      error.message ||
+      "Something went wrong."
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
+
+  /* =====================================================
+                      UI
+  ===================================================== */
 
   return (
-    <div className="register-wrapper">
-
-     
-      {/* LEFT SIDE */}
-
-      <div className="register-left">
-
-        <h1>
-          RailSwap
-        </h1>
-
-        <p>
-          India's AI Powered Railway Passenger Assistance Platform.
-        </p>
-
-        <div className="feature-card">
-          🚆 AI Powered Seat Exchange
-        </div>
-
-        <div className="feature-card">
-          👨‍👩‍👧 Family Auto Linking
-        </div>
-
-        <div className="feature-card">
-          📍 Smart Journey Companion
-        </div>
-
-        <div className="feature-card">
-          🛡 Secure Authentication
-        </div>
-
-        <div className="feature-card">
-          ⭐ Trusted Passenger Platform
-        </div>
-
-              <div className="register-info">
-
-  <div className="info-box">
-    <h2>50K+</h2>
-    <p>Registered Passengers</p>
-  </div>
-
-  <div className="info-box">
-    <h2>12K+</h2>
-    <p>Successful Seat Swaps</p>
-  </div>
-
-  <div className="info-box">
-    <h2>99.2%</h2>
-    <p>Customer Satisfaction</p>
-  </div>
-
-</div>
-
-<div className="register-security">
-  🔒 Your information is protected with encrypted authentication and secure cloud storage.
-</div>
-
-      </div>
-
-
-
-      {/* RIGHT SIDE */}
+    <div className="auth-container">
 
       <div className="auth-card">
 
-        <h1>
-          Create Account
-        </h1>
+        <h2>Create Account</h2>
 
         <p>
-          Join RailSwap today —
-          your smart railway companion.
+          Create your RailSwap account
         </p>
 
-        {errors.general && (
-          <div className="auth-error">
-            {
-              errors.general
-            }
-          </div>
-        )}
+        {/* OTP UI Part 2 me aayega */}
+        {!showOTPBox && (
 
-        <form
-          onSubmit={
-            handleSubmit
-          }
-        >
+          <form
+            onSubmit={handleRegister}
+          >
 
-          <div className="form-group">
-            <label>
-              Full Name
-            </label>
+            <div className="input-group">
 
-            <input
-              type="text"
-              name="fullName"
-              value={
-                formData.fullName
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter full name"
-            />
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Full Name"
+                value={formData.fullName}
+                onChange={handleChange}
+                maxLength={50}
+                autoComplete="name"
+              />
 
-            {errors.fullName && (
-              <div className="field-error">
-                {
-                  errors.fullName
+            </div>
+
+            <div className="input-group">
+
+              <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  maxLength={100}
+                  autoComplete="email"
+              />
+
+            </div>
+
+            <div className="input-group">
+              <span className="country-code">+91</span>
+
+              <input
+                type="text"
+                name="phoneNumber"
+                placeholder="9876543210"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                maxLength={10}
+                inputMode="numeric"
+                autoComplete="tel"
+              />
+            </div>
+
+            <div className="input-group password-group">
+
+              <input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
                 }
-              </div>
-            )}
-          </div>
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+              />
 
-          <div className="form-group">
-            <label>
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              value={
-                formData.email
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter email"
-            />
-
-            {errors.email && (
-              <div className="field-error">
-                {
-                  errors.email
+              <span
+                className="eye-icon"
+                onClick={() =>
+                  setShowPassword(
+                    !showPassword
+                  )
                 }
-              </div>
-            )}
-          </div>
+              >
+                {showPassword ? (
+                  <FaEyeSlash />
+                ) : (
+                  <FaEye />
+                )}
+              </span>
 
-          <div className="form-group">
-            <label>
-              Mobile Number
-            </label>
+            </div>
 
-            <input
-              type="tel"
-              name="phone"
-              value={
-                formData.phone
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter mobile number"
-            />
+            <div className="input-group password-group">
 
-            {errors.phone && (
-              <div className="field-error">
-                {
-                  errors.phone
+              <input
+                type={
+                  showConfirmPassword
+                    ? "text"
+                    : "password"
                 }
-              </div>
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={
+                  formData.confirmPassword
+                }
+                onChange={handleChange}
+              />
+
+              <span
+                className="eye-icon"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    !showConfirmPassword
+                  )
+                }
+              >
+                {showConfirmPassword ? (
+                  <FaEyeSlash />
+                ) : (
+                  <FaEye />
+                )}
+              </span>
+
+            </div>
+
+            {error && (
+              <p className="error-message">
+                {error}
+              </p>
             )}
-          </div>
 
-          <div className="form-group">
-            <label>
-              Password
-            </label>
+            {success && (
+              <p className="success-message">
+                {success}
+              </p>
+            )}
 
-            <div className="password-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Create strong password"
-            />
-
-            <span
-              className="password-toggle"
-              onClick={() =>
-                setShowPassword(!showPassword)
-              }
+            <button
+              type="submit"
+              className="auth-btn"
+              disabled={loading}
             >
-              {showPassword ? (
-                <FaEyeSlash />
-              ) : (
-                <FaEye />
-              )}
-            </span>
-          </div>
+              {loading
+                ? "Creating..."
+                : "Create Account"}
+            </button>
 
-            {errors.password && (
-              <div className="field-error">
-                {
-                  errors.password
-                }
-              </div>
-            )}
-          </div>
-
-          <div className="password-wrapper">
-  <input
-    type={
-      showConfirmPassword
-        ? "text"
-        : "password"
-    }
-    name="confirmPassword"
-    value={formData.confirmPassword}
-    onChange={handleChange}
-    placeholder="Confirm password"
-  />
-
-  <span
-    className="password-toggle"
-    onClick={() =>
-      setShowConfirmPassword(
-        !showConfirmPassword
-      )
-    }
-  >
-    {showConfirmPassword ? (
-      <FaEyeSlash />
-    ) : (
-      <FaEye />
-    )}
+            <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    margin: "20px 0",
+  }}
+>
+  <hr style={{ flex: 1 }} />
+  <span style={{ margin: "0 10px", color: "#777" }}>
+    OR
   </span>
+  <hr style={{ flex: 1 }} />
 </div>
 
-          <label className="terms">
-            <input
-              type="checkbox"
-              name="terms"
-              checked={
-                formData.terms
-              }
-              onChange={
-                handleChange
-              }
-            />
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "20px",
+  }}
+>
+  <GoogleLogin
+    onSuccess={handleGoogleRegister}
+    onError={() =>
+      setError("Google Registration Failed.")
+    }
+    theme="outline"
+    size="large"
+    shape="pill"
+    width="320"
+  />
+</div>
 
-            I agree to Terms &
-            Conditions
-          </label>
+            <div className="auth-footer">
 
-          {errors.terms && (
-            <div className="field-error">
-              {
-                errors.terms
-              }
+              Already have an account?
+
+              <Link to="/login">
+                Login
+              </Link>
+
             </div>
-          )}
 
-          <button
-            className="auth-btn"
-            disabled={
-              isLoading
-            }
-          >
-            {isLoading
-              ? "Creating Account..."
-              : "Create Account"}
-          </button>
+          </form>
 
-        </form>
+        )}
 
-        <p className="auth-footer">
-          Already have an account?
+        {/* OTP Section Part 2 */}
+        {/* =====================================================
+                    OTP SECTION
+===================================================== */}
 
-          <Link to="/login">
-            Login
-          </Link>
-        </p>
+{showOTPBox && (
 
+  <form onSubmit={handleVerifyOTP}>
+
+    <h2>Email Verification</h2>
+
+    <p>
+      Enter the OTP sent to
+      <br />
+      <strong>{formData.email}</strong>
+    </p>
+
+    <div className="input-group">
+
+      <input
+        type="text"
+        placeholder="Enter OTP"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        maxLength={6}
+      />
+
+    </div>
+
+    {error && (
+      <p className="error-message">
+        {error}
+      </p>
+    )}
+
+    {success && (
+      <p className="success-message">
+        {success}
+      </p>
+    )}
+
+    <button
+      type="submit"
+      className="auth-btn"
+      disabled={loading}
+    >
+      {loading ? "Verifying..." : "Verify OTP"}
+    </button>
+
+    <button
+      type="button"
+      className="auth-btn"
+      onClick={async () => {
+
+        try {
+
+          const response =
+            await authAPI.resendOtp({
+              email: formData.email,
+            });
+
+          setError("");
+          setSuccess(
+            response.message ||
+            "OTP sent successfully."
+          );
+
+        } catch (error) {
+
+          setSuccess("");
+          setError(
+            error.message ||
+            "Unable to resend OTP."
+          );
+
+        }
+
+      }}
+    >
+      Resend OTP
+    </button>
+
+    <div className="auth-footer">
+
+      <button
+        type="button"
+        className="link-btn"
+        onClick={() => {
+
+          setShowOTPBox(false);
+
+          setOtp("");
+
+        }}
+      >
+        Back
+      </button>
+
+    </div>
+
+  </form>
+
+)}
+
+     
+        
       </div>
 
     </div>
   );
-};
+}
 
 export default Register;

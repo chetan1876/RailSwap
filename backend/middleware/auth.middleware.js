@@ -1,53 +1,82 @@
-const jwt = require("jsonwebtoken");
+const ApiResponse = require("../shared/apiResponse");
 
-const authMiddleware = (
-  req,
-  res,
-  next
-) => {
-  try {
-    const authHeader =
-      req.headers.authorization;
+const {
+    verifyAccessToken,
+} = require("../utils/jwt");
 
-    if (
-      !authHeader ||
-      !authHeader.startsWith(
-        "Bearer "
-      )
-    ) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message:
-            "Access denied. Token missing.",
-        });
+/* =====================================================
+                AUTH MIDDLEWARE
+===================================================== */
+
+const authMiddleware = (req, res, next) => {
+
+    try {
+
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+
+            return res
+                .status(401)
+                .json(
+                    ApiResponse.unauthorized(
+                        "Authorization header is required."
+                    )
+                );
+
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+
+            return res
+                .status(401)
+                .json(
+                    ApiResponse.unauthorized(
+                        "Invalid authorization format."
+                    )
+                );
+
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        if (!token) {
+
+            return res
+                .status(401)
+                .json(
+                    ApiResponse.unauthorized(
+                        "Access token is required."
+                    )
+                );
+
+        }
+
+        const decoded =
+            verifyAccessToken(token);
+
+        req.user = {
+            uid: decoded.uid,
+            email: decoded.email,
+            role: decoded.role,
+        };
+
+        next();
+
     }
 
-    const token =
-      authHeader.split(
-        " "
-      )[1];
+    catch (error) {
 
-    const decoded =
-      jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      );
+        return res
+            .status(401)
+            .json(
+                ApiResponse.unauthorized(
+                    "Invalid or expired access token."
+                )
+            );
 
-    req.user = decoded;
+    }
 
-    next();
-  } catch (error) {
-    return res
-      .status(401)
-      .json({
-        success: false,
-        message:
-          "Invalid or expired token.",
-      });
-  }
 };
 
-module.exports =
-  authMiddleware;
+module.exports = authMiddleware;
