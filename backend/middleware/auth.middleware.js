@@ -6,8 +6,9 @@ const authMiddleware = (
   next
 ) => {
   try {
-    const authHeader =
-      req.headers.authorization;
+  const authHeader = req.headers.authorization;
+
+console.log("Authorization Header:", authHeader);
 
     if (
       !authHeader ||

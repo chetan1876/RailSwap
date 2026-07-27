@@ -119,6 +119,7 @@ router.post(
 router.delete(
   "/:userId/doctors/:doctorId",
   authMiddleware,
+  validate(getDoctorsValidation),
   EmergencyMedicalController.disconnectDoctor
 );
 
@@ -159,6 +160,7 @@ router.post(
 router.delete(
   "/:userId/donors/:donorId",
   authMiddleware,
+  validate(getDonorsValidation),
   EmergencyMedicalController.disconnectDonor
 );
 
@@ -191,6 +193,7 @@ router.post(
 router.get(
   "/:userId/emergency-status",
   authMiddleware,
+  validate(getDashboardValidation),
   EmergencyMedicalController.getEmergencyStatus
 );
 

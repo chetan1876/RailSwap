@@ -80,12 +80,13 @@ const register = async (req, res) => {
     return res.status(201).json({
       success: true,
       token,
-      user: {
-        fullName,
-        email,
-        phoneNumber,
-        role: "USER",
-      },
+ user: {
+  id: email,
+  fullName,
+  email,
+  phoneNumber,
+  role: "USER",
+},
     });
   } catch (error) {
     console.error(
@@ -164,15 +165,13 @@ const login = async (req, res) => {
       success: true,
       token,
       user: {
-        fullName:
-          user.fullName,
-        email:
-          user.email,
-        phoneNumber:
-          user.phoneNumber,
-        role:
-          user.role,
-      },
+  id: user.email,
+  fullName: user.fullName,
+  email: user.email,
+  phoneNumber: user.phoneNumber,
+  role: user.role,
+},
+     
     });
   } catch (error) {
     console.error(

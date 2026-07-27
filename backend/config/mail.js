@@ -1,14 +1,34 @@
 const nodemailer = require("nodemailer");
 
+console.log("EMAIL_USER =", process.env.EMAIL_USER);
+console.log("EMAIL_PASS =", process.env.EMAIL_PASS ? "Loaded" : "Not Loaded");
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
+  port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+  secure: false, // true for 465, false for 587 (STARTTLS)
 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+
+// Verify SMTP connection at startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("[SMTP] Transporter verification FAILED:", error.message);
+    console.error("[SMTP] Check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS in .env");
+  } else {
+    console.log("[SMTP] Transporter is ready to send emails.");
+  }
 });
 
 /*
@@ -43,13 +63,14 @@ const sendEmail = async ({
     return info;
   } catch (error) {
     console.error(
-      "Email Sending Failed:",
-      error.message
+      "[Email] Sending Failed:",
+      error.message,
+      error.code || "",
+      error.response || ""
     );
 
-    throw new Error(
-      "Failed to send email."
-    );
+    // Re-throw original error so callers can see the real reason
+    throw error;
   }
 };
 

@@ -1,5 +1,9 @@
 require("dotenv").config();
 
+const womenSafetyRoutes = require("../modules/womenSafety/womenSafety.routes");
+const emergencyMedicalRoutes = require("../modules/emergencyMedical/emergencyMedical.routes");
+const notificationRoutes = require("../modules/notification/notification.routes");
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -22,6 +26,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "http://localhost:5175",
     ],
     credentials: true,
     methods: [
@@ -60,7 +65,18 @@ app.use(
   "/api/auth",
   authRoutes
 );
-
+app.use(
+  "/api/women-safety",
+  womenSafetyRoutes
+);
+app.use(
+  "/api/emergency-medical",
+  emergencyMedicalRoutes
+);
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
 /*
 ========================================
 HEALTH CHECK

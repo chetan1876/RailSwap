@@ -49,13 +49,9 @@ const updateProfile = async (
   });
 
   const updatedUser =
-    await User.findByIdAndUpdate(
+    await userRepository.updateUserById(
       userId,
-      updates,
-      {
-        new: true,
-        runValidators: true,
-      }
+      updates
     );
 
   if (!updatedUser) {
@@ -75,7 +71,7 @@ const deleteProfile = async (
   userId
 ) => {
   const deletedUser =
-    await User.findByIdAndDelete(
+    await userRepository.deleteUserById(
       userId
     );
 
@@ -97,7 +93,7 @@ const getUserById = async (
   userId
 ) => {
   const user =
-    await User.findById(userId);
+    await userRepository.findUserById(userId);
 
   if (!user) {
     throw new Error("User not found");
@@ -118,13 +114,10 @@ const updateUserStatus = async (
   status
 ) => {
   const user =
-    await User.findByIdAndUpdate(
+    await userRepository.updateUserById(
       userId,
       {
         status,
-      },
-      {
-        new: true,
       }
     );
 
@@ -144,9 +137,9 @@ CHECK USER EXISTS
 const userExists = async (
   email
 ) => {
-  return await User.findOne({
-    email,
-  });
+  return await userRepository.findUserByEmail(
+    email
+  );
 };
 
 /*
@@ -157,9 +150,9 @@ GET USER BY EMAIL
 
 const getUserByEmail =
   async (email) => {
-    return await User.findOne({
-      email,
-    });
+    return await userRepository.findUserByEmail(
+      email
+    );
   };
 
 module.exports = {

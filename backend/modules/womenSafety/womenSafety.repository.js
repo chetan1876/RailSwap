@@ -12,19 +12,53 @@ class WomenSafetyRepository {
 
   async findByUserId(userId) {
 
+    if (!userId) return null;
+    const strUserId = String(userId);
+
     const doc = await db
       .collection(COLLECTION)
-      .doc(userId)
+      .doc(strUserId)
       .get();
 
-    if (!doc.exists) {
-      return null;
+    console.log("Document Exists:", doc.exists);
+
+    if (doc.exists) {
+      console.log("Firestore Data:", doc.data());
+      return {
+        id: doc.id,
+        ...doc.data(),
+      };
     }
 
-    return {
-      id: doc.id,
-      ...doc.data(),
-    };
+    const snapshot = await db
+      .collection(COLLECTION)
+      .where("userId", "==", userId)
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      const foundDoc = snapshot.docs[0];
+      return {
+        id: foundDoc.id,
+        ...foundDoc.data(),
+      };
+    }
+
+    const strSnapshot = await db
+      .collection(COLLECTION)
+      .where("userId", "==", strUserId)
+      .limit(1)
+      .get();
+
+    if (!strSnapshot.empty) {
+      const foundDoc = strSnapshot.docs[0];
+      return {
+        id: foundDoc.id,
+        ...foundDoc.data(),
+      };
+    }
+
+    return null;
   }
 
   /*

@@ -1,7 +1,8 @@
 const authRepository = require("./auth.repository");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
-const User = require("./auth.model");
+const userRepository = require("../users/user.repository");
+const bcrypt = require("bcryptjs");
 
 /* ===========================
    TOKEN HELPERS
@@ -10,7 +11,7 @@ const User = require("./auth.model");
 const generateAccessToken = (user) => {
   return jwt.sign(
     {
-      id: user._id,
+      id: user.id || user._id,
       role: user.role,
     },
     process.env.JWT_SECRET,
@@ -24,7 +25,7 @@ const generateAccessToken = (user) => {
 const generateRefreshToken = (user) => {
   return jwt.sign(
     {
-      id: user._id,
+      id: user.id || user._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
@@ -79,12 +80,14 @@ const registerUser = async (
         10 * 60 * 1000
     );
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   const user =
-    await User.create({
+    await userRepository.createUser({
       fullName,
       email,
       phoneNumber,
-      password,
+      password: hashedPassword,
       gender,
       otp,
       otpExpiry,
@@ -105,10 +108,8 @@ const verifyOtp = async (
   enteredOtp
 ) => {
   const user =
-    await User.findOne({
-      email,
-    }).select(
-      "+otp +otpExpiry"
+    await userRepository.findUserByEmail(
+      email
     );
 
   if (!user) {
@@ -140,7 +141,7 @@ const verifyOtp = async (
   user.otp = null;
   user.otpExpiry = null;
 
-  await user.save();
+  await userRepository.saveUser(user);
 
   return user;
 };
@@ -154,10 +155,8 @@ const loginUser = async (
   password
 ) => {
   const user =
-    await User.findOne({
-      email,
-    }).select(
-      "+password +refreshToken"
+    await userRepository.findUserByEmail(
+      email
     );
 
   if (!user) {
@@ -175,8 +174,9 @@ const loginUser = async (
   }
 
   const isPasswordMatched =
-    await user.comparePassword(
-      password
+    await bcrypt.compare(
+      password,
+      user.password
     );
 
   if (
@@ -203,7 +203,7 @@ const loginUser = async (
   user.lastLogin =
     new Date();
 
-  await user.save();
+  await userRepository.saveUser(user);
 
   return {
     user,
@@ -219,9 +219,9 @@ const loginUser = async (
 const forgotPassword =
   async (email) => {
     const user =
-      await User.findOne({
-        email,
-      });
+      await userRepository.findUserByEmail(
+        email
+      );
 
     if (!user) {
       throw new Error(
@@ -232,7 +232,7 @@ const forgotPassword =
     const resetToken =
       jwt.sign(
         {
-          id: user._id,
+          id: user.id || user._id,
         },
         process.env.JWT_SECRET,
         {
@@ -252,7 +252,7 @@ const forgotPassword =
             1000
       );
 
-    await user.save();
+    await userRepository.saveUser(user);
 
     return {
       user,
@@ -267,10 +267,8 @@ const forgotPassword =
 const logoutUser =
   async (userId) => {
     const user =
-      await User.findById(
+      await userRepository.findUserById(
         userId
-      ).select(
-        "+refreshToken"
       );
 
     if (!user) {
@@ -282,7 +280,7 @@ const logoutUser =
     user.refreshToken =
       null;
 
-    await user.save();
+    await userRepository.saveUser(user);
 
     return {
       message:

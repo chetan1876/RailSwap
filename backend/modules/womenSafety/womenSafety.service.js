@@ -1,4 +1,147 @@
 const WomenSafetyRepository = require("./womenSafety.repository");
+const NotificationService = require("../notification/notification.service");
+const userRepository = require("../users/user.repository");
+const { sendEmail } = require("../../config/mail");
+const { messaging } = require("../../config/firebase");
+const axios = require("axios");
+
+async function sendMultiChannelEmergencyAlert({
+  userId,
+  title,
+  message,
+  type = "WOMEN_SAFETY",
+  details = {},
+}) {
+  console.log(`[EmergencyAlert] sendMultiChannelEmergencyAlert triggered. userId=${userId}, type=${type}`);
+
+  try {
+    await NotificationService.sendWomenSafetyNotification(
+      userId,
+      `[ADMIN ALERT] ${title}`,
+      `Emergency triggered by User ID: ${userId}. ${message}`
+    );
+    console.log("[EmergencyAlert] Admin notification logged to Firestore.");
+  } catch (err) {
+    console.error("[EmergencyAlert] Failed to log admin notification:", err.message);
+  }
+
+  let user = null;
+  try {
+    user = await userRepository.findUserById(userId);
+    if (user) {
+      console.log(`[EmergencyAlert] User fetched: ${user.fullName || user.email || userId}`);
+    } else {
+      console.warn(`[EmergencyAlert] User not found in Firestore for userId=${userId}`);
+    }
+  } catch (err) {
+    console.warn("[EmergencyAlert] Could not fetch user profile for emergency alert:", err.message);
+  }
+
+  const userEmail = user?.email;
+  const userName = user?.fullName || "RailSwap User";
+  const emergencyEmail = user?.emergencyContact?.email || userEmail || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+  const emergencyPhone = details?.phoneNumber || details?.phone || details?.mobileNumber || details?.mobile || details?.emergencyPhone || details?.contactPhone || user?.emergencyContact?.phone || user?.phoneNumber || process.env.ADMIN_PHONE;
+  const fcmToken = user?.fcmToken;
+
+  // ── EMAIL ALERT ──────────────────────────────────────────────────
+  if (emergencyEmail) {
+    console.log(`[EmergencyAlert] Attempting to send Email alert to: ${emergencyEmail}`);
+    try {
+      await sendEmail({
+        to: emergencyEmail,
+        subject: `🚨 EMERGENCY ALERT: ${title}`,
+        text: `EMERGENCY ALERT FOR ${userName.toUpperCase()}!\n\n${message}\n\nDetails:\n${JSON.stringify(details, null, 2)}\n\nPlease respond immediately.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #ef4444; border-radius: 8px; max-width: 600px;">
+            <h2 style="color: #ef4444; margin-top: 0;">🚨 EMERGENCY ALERT: ${title}</h2>
+            <p><strong>Passenger Name:</strong> ${userName}</p>
+            <p><strong>User ID:</strong> ${userId}</p>
+            <p><strong>Alert Details:</strong> ${message}</p>
+            <hr style="border: 1px solid #fee2e2; margin: 20px 0;" />
+            <pre style="background: #f8fafc; padding: 12px; border-radius: 4px;">${JSON.stringify(details, null, 2)}</pre>
+            <p style="color: #dc2626; font-weight: bold;">RailSwap Emergency Safety System</p>
+          </div>
+        `,
+      });
+      console.log(`[EmergencyAlert] ✅ Email alert sent successfully to: ${emergencyEmail}`);
+    } catch (emailErr) {
+      console.error(`[EmergencyAlert] ❌ Failed to send email alert to ${emergencyEmail}:`, emailErr.stack || emailErr.message || emailErr);
+    }
+  } else {
+    console.warn("[EmergencyAlert] No emergency email address available. Email alert skipped.");
+  }
+
+  // ── SMS ALERT (Fast2SMS) ──────────────────────────────────────────
+  console.log(`SMS destination: ${emergencyPhone}`);
+  if (emergencyPhone) {
+    if (process.env.FAST2SMS_API_KEY) {
+      console.log("Sending Fast2SMS...");
+      try {
+        let cleanPhone = String(emergencyPhone).replace(/\D/g, "");
+        if (cleanPhone.length > 10) {
+          cleanPhone = cleanPhone.slice(-10);
+        }
+
+        const smsMessage = `🚨 RAILSWAP EMERGENCY ALERT: ${title} for ${userName}! ${message}`;
+
+        const response = await axios.post(
+          "https://www.fast2sms.com/dev/bulkV2",
+          {
+            route: "q",
+            message: smsMessage,
+            language: "english",
+            flash: 0,
+            numbers: cleanPhone,
+          },
+          {
+            headers: {
+              authorization: process.env.FAST2SMS_API_KEY,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.data && response.data.return) {
+          console.log("SMS sent successfully via Fast2SMS");
+          console.log("[Fast2SMS] Success Details:", response.data);
+        } else {
+          console.error("Fast2SMS failed:", response.data ? response.data.message || JSON.stringify(response.data) : "Unknown Fast2SMS error");
+        }
+      } catch (smsErr) {
+        console.error("Fast2SMS failed:", smsErr.response?.data || smsErr.message || smsErr);
+      }
+    } else {
+      console.warn("[Fast2SMS] FAST2SMS_API_KEY not configured in .env. Fast2SMS alert skipped.");
+    }
+  } else {
+    console.warn("[EmergencyAlert] No emergency phone number available. SMS alert skipped.");
+  }
+
+  // ── FCM PUSH NOTIFICATION ─────────────────────────────────────────
+  try {
+    const fcmMessage = {
+      notification: {
+        title: `🚨 ${title}`,
+        body: message,
+      },
+      data: {
+        userId: String(userId),
+        type,
+        details: JSON.stringify(details),
+      },
+    };
+
+    if (fcmToken) {
+      await messaging.send({ ...fcmMessage, token: fcmToken });
+      console.log(`[EmergencyAlert] ✅ FCM Push notification sent to user device token.`);
+    } else if (messaging) {
+      await messaging.send({ ...fcmMessage, topic: "emergency_alerts" });
+      console.log(`[EmergencyAlert] ✅ FCM Push notification broadcasted to 'emergency_alerts' topic.`);
+    }
+  } catch (fcmErr) {
+    console.error("[EmergencyAlert] ❌ Failed to send FCM push notification:", fcmErr.message);
+  }
+}
 
 const {
   dashboardMapper,
@@ -55,17 +198,27 @@ class WomenSafetyService {
     return await WomenSafetyRepository.create(dashboard);
   }
 
-  async getDashboard(userId) {
+async getDashboard(userId) {
 
-    const dashboard =
-      await WomenSafetyRepository.getDashboard(userId);
+  console.log("Service userId:", userId);
 
-    if (!dashboard) {
-      throw new Error("Women Safety Dashboard not found");
-    }
+  let dashboard =
+    await WomenSafetyRepository.getDashboard(userId);
 
-    return dashboardMapper(dashboard);
+  console.log("Dashboard From Repository:", dashboard);
+
+  if (!dashboard) {
+    console.log("Dashboard not found, initializing dashboard for userId:", userId);
+    await this.initializeDashboard(userId);
+    dashboard = await WomenSafetyRepository.getDashboard(userId);
   }
+
+  if (!dashboard) {
+    throw new Error("Women Safety Dashboard not found");
+  }
+
+  return dashboardMapper(dashboard);
+}
 
   async getSafetyScore(userId) {
 
@@ -364,14 +517,38 @@ const companion = {
 
     async raiseSOS(userId, payload) {
 
-    const dashboard =
+    console.log("SOS received");
+    console.log("SOS User ID:", userId);
+    console.log("Searching dashboard...");
+    let dashboard =
       await WomenSafetyRepository.findByUserId(userId);
+    console.log("Dashboard Found:", dashboard);
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      const createdDashboard = await this.initializeDashboard(userId);
+      console.log("Dashboard Created:", createdDashboard);
+      dashboard = createdDashboard;
     }
 
+    console.log("Continuing SOS process...");
+
     await WomenSafetyRepository.raiseEmergency(userId);
+
+    try {
+      await NotificationService.sendWomenSafetyNotification(
+        userId,
+        "Women Safety SOS Alert",
+        `Emergency SOS raised for coach ${payload.coach || 'B2'}, seat ${payload.seatNumber || '21'}. Help requested immediately.`
+      );
+    } catch (_) {}
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Women Safety SOS Alert",
+      message: `Emergency SOS raised for coach ${payload.coach || 'B2'}, seat ${payload.seatNumber || '21'}. Help requested immediately.`,
+      type: "WOMEN_SAFETY_SOS",
+      details: payload,
+    });
 
     return {
       success: true,
@@ -391,12 +568,28 @@ const companion = {
 
   async contactRPF(userId, payload) {
 
-    const dashboard =
+    let dashboard =
       await WomenSafetyRepository.findByUserId(userId);
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      dashboard = await this.initializeDashboard(userId);
     }
+
+    try {
+      await NotificationService.sendWomenSafetyNotification(
+        userId,
+        "RPF Alert Sent",
+        `RPF notified for coach ${payload.coach || 'B2'}, seat ${payload.seatNumber || '21'}. Reason: ${payload.reason || 'Safety assistance requested'}.`
+      );
+    } catch (_) {}
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Women Safety RPF Alert",
+      message: `RPF notified for coach ${payload.coach || 'B2'}, seat ${payload.seatNumber || '21'}. Reason: ${payload.reason || 'Safety assistance requested'}.`,
+      type: "WOMEN_SAFETY_RPF",
+      details: payload,
+    });
 
     return {
       success: true,
@@ -414,12 +607,28 @@ const companion = {
 
   async contactHelpline(userId, payload) {
 
-    const dashboard =
+    let dashboard =
       await WomenSafetyRepository.findByUserId(userId);
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      dashboard = await this.initializeDashboard(userId);
     }
+
+    try {
+      await NotificationService.sendWomenSafetyNotification(
+        userId,
+        "Helpline Contacted",
+        `Helpline request submitted for issue: ${payload.issue || 'Women Safety Helpline'}.`
+      );
+    } catch (_) {}
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Women Safety Helpline Alert",
+      message: `Helpline request submitted for issue: ${payload.issue || 'Women Safety Helpline'}.`,
+      type: "WOMEN_SAFETY_HELPLINE",
+      details: payload,
+    });
 
     return {
       success: true,

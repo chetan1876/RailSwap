@@ -1,4 +1,4 @@
-const User = require("../users/user.model");
+const userRepository = require("../users/user.repository");
 const AuthModel = require("./auth.model");
 
 
@@ -9,7 +9,7 @@ CREATE USER
 */
 
 const createUser = async (userData) => {
-  return await User.create(userData);
+  return await userRepository.createUser(userData);
 };
 
 /*
@@ -19,9 +19,7 @@ FIND USER BY EMAIL
 */
 
 const findUserByEmail = async (email) => {
-  return await User.findOne({
-    email: email.toLowerCase(),
-  });
+  return await userRepository.findUserByEmail(email);
 };
 
 /*
@@ -33,9 +31,7 @@ FIND USER BY PHONE NUMBER
 const findUserByPhoneNumber = async (
   phoneNumber
 ) => {
-  return await User.findOne({
-    phoneNumber,
-  });
+  return await userRepository.findUserByPhone(phoneNumber);
 };
 
 
@@ -48,11 +44,7 @@ FIND USER BY EMAIL WITH PASSWORD
 const findUserForLogin = async (
   email
 ) => {
-  return await User.findOne({
-    email: email.toLowerCase(),
-  }).select(
-    "+password +refreshToken +otp +otpExpiry"
-  );
+  return await userRepository.findUserByEmail(email);
 };
 
 /*
@@ -63,11 +55,7 @@ FIND USER FOR OTP VERIFICATION
 
 const findUserForOtpVerification =
   async (email) => {
-    return await User.findOne({
-      email: email.toLowerCase(),
-    }).select(
-      "+otp +otpExpiry"
-    );
+    return await userRepository.findUserByEmail(email);
   };
 
 /*
@@ -78,12 +66,7 @@ FIND USER BY RESET TOKEN
 
 const findUserByResetToken =
   async (token) => {
-    return await User.findOne({
-      passwordResetToken:
-        token,
-    }).select(
-      "+passwordResetToken +passwordResetExpiry"
-    );
+    return await userRepository.findUserByResetToken(token);
   };
 
 /*
@@ -95,7 +78,7 @@ UPDATE USER
 const updateUser = async (
   user
 ) => {
-  return await user.save();
+  return await userRepository.saveUser(user);
 };
 
 /*
@@ -109,13 +92,10 @@ const updateRefreshToken =
     userId,
     refreshToken
   ) => {
-    return await User.findByIdAndUpdate(
+    return await userRepository.updateUserById(
       userId,
       {
         refreshToken,
-      },
-      {
-        new: true,
       }
     );
   };
@@ -128,7 +108,7 @@ REMOVE REFRESH TOKEN
 
 const removeRefreshToken =
   async (userId) => {
-    return await User.findByIdAndUpdate(
+    return await userRepository.updateUserById(
       userId,
       {
         refreshToken: null,
@@ -146,10 +126,9 @@ const emailExists = async (
   email
 ) => {
   const user =
-    await User.exists({
-      email:
-        email.toLowerCase(),
-    });
+    await userRepository.findUserByEmail(
+      email
+    );
 
   return !!user;
 };
@@ -164,9 +143,9 @@ const phoneExists = async (
   phoneNumber
 ) => {
   const user =
-    await User.exists({
-      phoneNumber,
-    });
+    await userRepository.findUserByPhone(
+      phoneNumber
+    );
 
   return !!user;
 };

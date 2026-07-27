@@ -1,4 +1,4 @@
-const User = require("./user.model");
+const userRepository = require("./user.repository");
 
 /*
 ====================================
@@ -9,7 +9,7 @@ GET /api/users/profile
 
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(
+    const user = await userRepository.findUserById(
       req.user.id
     );
 
@@ -70,13 +70,9 @@ const updateProfile = async (
     );
 
     const user =
-      await User.findByIdAndUpdate(
+      await userRepository.updateUserById(
         req.user.id,
-        updates,
-        {
-          new: true,
-          runValidators: true,
-        }
+        updates
       );
 
     if (!user) {
@@ -111,7 +107,7 @@ const deleteProfile =
   async (req, res) => {
     try {
       const user =
-        await User.findByIdAndDelete(
+        await userRepository.deleteUserById(
           req.user.id
         );
 
@@ -148,7 +144,7 @@ const getUserById =
   async (req, res) => {
     try {
       const user =
-        await User.findById(
+        await userRepository.findUserById(
           req.params.id
         );
 
@@ -188,13 +184,10 @@ const updateUserStatus =
       } = req.body;
 
       const user =
-        await User.findByIdAndUpdate(
+        await userRepository.updateUserById(
           req.params.id,
           {
             status,
-          },
-          {
-            new: true,
           }
         );
 

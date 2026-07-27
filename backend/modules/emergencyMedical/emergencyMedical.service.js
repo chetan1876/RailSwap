@@ -1,4 +1,147 @@
 const EmergencyMedicalRepository = require("./emergencyMedical.repository");
+const NotificationService = require("../notification/notification.service");
+const userRepository = require("../users/user.repository");
+const { sendEmail } = require("../../config/mail");
+const { messaging } = require("../../config/firebase");
+const axios = require("axios");
+
+async function sendMultiChannelEmergencyAlert({
+  userId,
+  title,
+  message,
+  type = "EMERGENCY_MEDICAL",
+  details = {},
+}) {
+  console.log(`[MedicalAlert] sendMultiChannelEmergencyAlert triggered. userId=${userId}, type=${type}`);
+
+  try {
+    await NotificationService.sendEmergencyNotification(
+      userId,
+      `[ADMIN ALERT] ${title}`,
+      `Emergency Medical triggered by User ID: ${userId}. ${message}`
+    );
+    console.log("[MedicalAlert] Admin notification logged to Firestore.");
+  } catch (err) {
+    console.error("[MedicalAlert] Failed to log admin notification:", err.message);
+  }
+
+  let user = null;
+  try {
+    user = await userRepository.findUserById(userId);
+    if (user) {
+      console.log(`[MedicalAlert] User fetched: ${user.fullName || user.email || userId}`);
+    } else {
+      console.warn(`[MedicalAlert] User not found in Firestore for userId=${userId}`);
+    }
+  } catch (err) {
+    console.warn("[MedicalAlert] Could not fetch user profile for emergency alert:", err.message);
+  }
+
+  const userEmail = user?.email;
+  const userName = user?.fullName || "RailSwap User";
+  const emergencyEmail = user?.emergencyContact?.email || userEmail || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+  const emergencyPhone = details?.phoneNumber || details?.phone || details?.mobileNumber || details?.mobile || details?.emergencyPhone || details?.contactPhone || user?.emergencyContact?.phone || user?.phoneNumber || process.env.ADMIN_PHONE;
+  const fcmToken = user?.fcmToken;
+
+  // ── EMAIL ALERT ──────────────────────────────────────────────────
+  if (emergencyEmail) {
+    console.log(`[MedicalAlert] Attempting to send Email alert to: ${emergencyEmail}`);
+    try {
+      await sendEmail({
+        to: emergencyEmail,
+        subject: `🚨 MEDICAL EMERGENCY ALERT: ${title}`,
+        text: `MEDICAL EMERGENCY ALERT FOR ${userName.toUpperCase()}!\n\n${message}\n\nDetails:\n${JSON.stringify(details, null, 2)}\n\nPlease respond immediately.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #dc2626; border-radius: 8px; max-width: 600px;">
+            <h2 style="color: #dc2626; margin-top: 0;">🚨 MEDICAL EMERGENCY ALERT: ${title}</h2>
+            <p><strong>Patient Name:</strong> ${details.patientName || userName}</p>
+            <p><strong>User ID:</strong> ${userId}</p>
+            <p><strong>Alert Details:</strong> ${message}</p>
+            <hr style="border: 1px solid #fecaca; margin: 20px 0;" />
+            <pre style="background: #f8fafc; padding: 12px; border-radius: 4px;">${JSON.stringify(details, null, 2)}</pre>
+            <p style="color: #b91c1c; font-weight: bold;">RailSwap Emergency Medical System</p>
+          </div>
+        `,
+      });
+      console.log(`[MedicalAlert] ✅ Email alert sent successfully to: ${emergencyEmail}`);
+    } catch (emailErr) {
+      console.error(`[MedicalAlert] ❌ Failed to send email alert to ${emergencyEmail}:`, emailErr.stack || emailErr.message || emailErr);
+    }
+  } else {
+    console.warn("[MedicalAlert] No emergency email address available. Email alert skipped.");
+  }
+
+  // ── SMS ALERT (Fast2SMS) ──────────────────────────────────────────
+  console.log(`SMS destination: ${emergencyPhone}`);
+  if (emergencyPhone) {
+    if (process.env.FAST2SMS_API_KEY) {
+      console.log("Sending Fast2SMS...");
+      try {
+        let cleanPhone = String(emergencyPhone).replace(/\D/g, "");
+        if (cleanPhone.length > 10) {
+          cleanPhone = cleanPhone.slice(-10);
+        }
+
+        const smsMessage = `🚨 RAILSWAP MEDICAL EMERGENCY: ${title} for ${details.patientName || userName}! ${message}`;
+
+        const response = await axios.post(
+          "https://www.fast2sms.com/dev/bulkV2",
+          {
+            route: "q",
+            message: smsMessage,
+            language: "english",
+            flash: 0,
+            numbers: cleanPhone,
+          },
+          {
+            headers: {
+              authorization: process.env.FAST2SMS_API_KEY,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.data && response.data.return) {
+          console.log("SMS sent successfully via Fast2SMS");
+          console.log("[Fast2SMS] Success Details:", response.data);
+        } else {
+          console.error("Fast2SMS failed:", response.data ? response.data.message || JSON.stringify(response.data) : "Unknown Fast2SMS error");
+        }
+      } catch (smsErr) {
+        console.error("Fast2SMS failed:", smsErr.response?.data || smsErr.message || smsErr);
+      }
+    } else {
+      console.warn("[Fast2SMS] FAST2SMS_API_KEY not configured in .env. Fast2SMS alert skipped.");
+    }
+  } else {
+    console.warn("[MedicalAlert] No emergency phone number available. SMS alert skipped.");
+  }
+
+  // ── FCM PUSH NOTIFICATION ─────────────────────────────────────────
+  try {
+    const fcmMessage = {
+      notification: {
+        title: `🚨 ${title}`,
+        body: message,
+      },
+      data: {
+        userId: String(userId),
+        type,
+        details: JSON.stringify(details),
+      },
+    };
+
+    if (fcmToken) {
+      await messaging.send({ ...fcmMessage, token: fcmToken });
+      console.log(`[MedicalAlert] ✅ FCM Push notification sent to user device token.`);
+    } else if (messaging) {
+      await messaging.send({ ...fcmMessage, topic: "emergency_alerts" });
+      console.log(`[MedicalAlert] ✅ FCM Push notification broadcasted to 'emergency_alerts' topic.`);
+    }
+  } catch (fcmErr) {
+    console.error("[MedicalAlert] ❌ Failed to send FCM push notification:", fcmErr.message);
+  }
+}
 
 const {
   dashboardMapper,
@@ -84,10 +227,20 @@ class EmergencyMedicalService {
 
   async getDashboard(userId) {
 
-    const dashboard =
+    console.log("Service userId:", userId);
+
+    let dashboard =
       await EmergencyMedicalRepository.getDashboard(
         userId
       );
+
+    console.log("Dashboard From Repository:", dashboard);
+
+    if (!dashboard) {
+      console.log("Dashboard not found, initializing dashboard for userId:", userId);
+      await this.initializeDashboard(userId);
+      dashboard = await EmergencyMedicalRepository.getDashboard(userId);
+    }
 
     if (!dashboard) {
 
@@ -694,19 +847,35 @@ class EmergencyMedicalService {
 
   async raiseSOS(userId, payload) {
 
-    const dashboard =
+    console.log("SOS received");
+    console.log("SOS User ID:", userId);
+    console.log("Searching dashboard...");
+    let dashboard =
       await EmergencyMedicalRepository.findByUserId(
         userId
       );
+    console.log("Dashboard Found:", dashboard);
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      const createdDashboard = await this.initializeDashboard(userId);
+      console.log("Dashboard Created:", createdDashboard);
+      dashboard = createdDashboard;
     }
+
+    console.log("Continuing SOS process...");
 
     await EmergencyMedicalRepository.raiseEmergency(
       userId,
       payload
     );
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Medical Emergency SOS Alert",
+      message: `Emergency Medical SOS requested for patient ${payload.patientName || 'Unknown'}, Coach ${payload.coach || 'N/A'}, Seat ${payload.seatNumber || 'N/A'}. Type: ${payload.emergencyType || 'Medical assistance'}.`,
+      type: "EMERGENCY_MEDICAL_SOS",
+      details: payload,
+    });
 
     return {
 
@@ -751,14 +920,22 @@ class EmergencyMedicalService {
 
   async contactDoctor(userId, payload) {
 
-    const dashboard =
+    let dashboard =
       await EmergencyMedicalRepository.findByUserId(
         userId
       );
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      dashboard = await this.initializeDashboard(userId);
     }
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Doctor Contact Request",
+      message: `Doctor request initiated for patient ${payload.patientName || 'Unknown'}. Doctor ID: ${payload.doctorId || 'N/A'}. Emergency Type: ${payload.emergencyType || 'Medical assistance'}.`,
+      type: "DOCTOR_REQUEST",
+      details: payload,
+    });
 
     return {
 
@@ -798,14 +975,22 @@ class EmergencyMedicalService {
 
   async contactHelpline(userId, payload) {
 
-    const dashboard =
+    let dashboard =
       await EmergencyMedicalRepository.findByUserId(
         userId
       );
 
     if (!dashboard) {
-      throw new Error("Dashboard not found");
+      dashboard = await this.initializeDashboard(userId);
     }
+
+    await sendMultiChannelEmergencyAlert({
+      userId,
+      title: "Medical Helpline Request",
+      message: `Medical Helpline requested for issue: ${payload.issue || 'Medical Emergency'}. Phone: ${payload.phoneNumber || 'N/A'}.`,
+      type: "MEDICAL_HELPLINE",
+      details: payload,
+    });
 
     return {
 

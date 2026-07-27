@@ -285,6 +285,137 @@
   line-height:1.8;
 }
 
+/* FORM VIEWS STYLING */
+.medical-form-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  max-width: 800px;
+  margin: 0 auto 28px auto;
+}
+
+.medical-form-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.medical-form-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.medical-form-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.medical-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.medical-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.medical-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.medical-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.medical-form-input,
+.medical-form-select,
+.medical-form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.medical-form-input:focus,
+.medical-form-select:focus,
+.medical-form-textarea:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.medical-form-input[readonly] {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.medical-form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 28px;
+  justify-content: flex-end;
+}
+
+.medical-cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.medical-cancel-btn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.medical-alert-banner {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.medical-alert-banner.success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.medical-alert-banner.error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
 @media(max-width:768px){
 
 .medical-top-grid{

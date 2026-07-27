@@ -23,25 +23,28 @@ class WomenSafetyController {
 
   }
 
-  async getDashboard(req, res, next) {
+async getDashboard(req, res, next) {
+  try {
+    const { userId } = req.params;
 
-    try {
+    console.log("Dashboard API Hit");
+    console.log("User ID:", userId);
 
-      const { userId } = req.params;
+    const response =
+      await WomenSafetyService.getDashboard(userId);
 
-      const response =
-        await WomenSafetyService.getDashboard(userId);
+    console.log("Response:", response);
 
-      return res.status(200).json({
-        success: true,
-        data: response,
-      });
+    return res.status(200).json({
+      success: true,
+      data: response,
+    });
 
-    } catch (error) {
-      next(error);
-    }
-
+  } catch (error) {
+    console.log("Controller Error:", error);
+    next(error);
   }
+}
 
   async getSafetyScore(req, res, next) {
 
