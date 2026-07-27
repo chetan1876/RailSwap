@@ -36,7 +36,7 @@ const dashboardMapper = (document) => {
 
 const companionMapper = (companion) => {
   return new CompanionDTO({
-    id: companion._id,
+    id: companion.id,
 
     name: companion.name,
 

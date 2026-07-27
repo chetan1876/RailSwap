@@ -2,22 +2,23 @@ const express = require("express");
 
 const router = express.Router();
 
-const WomenSafetyController = require("./womenSafety.controller");
+const EmergencyMedicalController = require("./emergencyMedical.controller");
 
 const {
   getDashboardValidation,
-  getSafetyScoreValidation,
-  getSafeSeatsValidation,
-  getCompanionsValidation,
-  deleteCompanionValidation,
-  connectCompanionValidation,
+  getResponseTimeValidation,
+  getDoctorsValidation,
+  getDonorsValidation,
+  connectDoctorValidation,
+  connectDonorValidation,
   emergencySOSValidation,
-  contactRPFValidation,
+  contactDoctorValidation,
   helplineValidation,
   insightValidation,
-} = require("./womenSafety.validation");
+} = require("./emergencyMedical.validation");
 
 const validate = require("../../middleware/validation.middleware");
+
 const authMiddleware = require("../../middleware/auth.middleware");
 
 /*
@@ -30,109 +31,135 @@ router.post(
   "/:userId/dashboard",
   authMiddleware,
   validate(getDashboardValidation),
-  WomenSafetyController.initializeDashboard
+  EmergencyMedicalController.initializeDashboard
 );
 
 router.get(
   "/:userId/dashboard",
   authMiddleware,
   validate(getDashboardValidation),
-  WomenSafetyController.getDashboard
+  EmergencyMedicalController.getDashboard
 );
 
 router.patch(
   "/:userId/dashboard/refresh",
   authMiddleware,
   validate(getDashboardValidation),
-  WomenSafetyController.refreshDashboard
+  EmergencyMedicalController.refreshDashboard
 );
 
 router.patch(
   "/:userId/dashboard/reset",
   authMiddleware,
   validate(getDashboardValidation),
-  WomenSafetyController.resetDashboard
+  EmergencyMedicalController.resetDashboard
 );
 
 router.delete(
   "/:userId/dashboard",
   authMiddleware,
   validate(getDashboardValidation),
-  WomenSafetyController.deleteDashboard
+  EmergencyMedicalController.deleteDashboard
 );
 
 /*
 |--------------------------------------------------------------------------
-| Safety Score
+| Response Time
 |--------------------------------------------------------------------------
 */
 
 router.get(
-  "/:userId/safety-score",
+  "/:userId/response-time",
   authMiddleware,
-  validate(getSafetyScoreValidation),
-  WomenSafetyController.getSafetyScore
+  validate(getResponseTimeValidation),
+  EmergencyMedicalController.getResponseTime
 );
 
 router.patch(
-  "/:userId/safety-score/refresh",
+  "/:userId/response-time/refresh",
   authMiddleware,
-  validate(getSafetyScoreValidation),
-  WomenSafetyController.refreshSafetyScore
+  validate(getResponseTimeValidation),
+  EmergencyMedicalController.refreshResponseTime
 );
 
 /*
 |--------------------------------------------------------------------------
-| Safe Seats
+| Doctors
 |--------------------------------------------------------------------------
 */
 
 router.get(
-  "/:userId/safe-seats",
+  "/:userId/doctors",
   authMiddleware,
-  validate(getSafeSeatsValidation),
-  WomenSafetyController.getSafeSeats
-);
-
-/*
-|--------------------------------------------------------------------------
-| Companions
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  "/:userId/companions",
-  authMiddleware,
-  validate(getCompanionsValidation),
-  WomenSafetyController.getCompanions
+  validate(getDoctorsValidation),
+  EmergencyMedicalController.getDoctors
 );
 
 router.get(
-  "/:userId/companions/verified",
+  "/:userId/doctors/available",
   authMiddleware,
-  validate(getCompanionsValidation),
-  WomenSafetyController.getVerifiedCompanions
+  validate(getDoctorsValidation),
+  EmergencyMedicalController.getAvailableDoctors
 );
 
 router.patch(
-  "/:userId/companions/refresh",
+  "/:userId/doctors/refresh",
   authMiddleware,
-  validate(getCompanionsValidation),
-  WomenSafetyController.refreshCompanions
+  validate(getDoctorsValidation),
+  EmergencyMedicalController.refreshDoctors
 );
 
 router.post(
-  "/:userId/companions/connect",
+  "/:userId/doctors/connect",
   authMiddleware,
-  validate(connectCompanionValidation),
-  WomenSafetyController.connectCompanion
+  validate(connectDoctorValidation),
+  EmergencyMedicalController.connectDoctor
 );
 
 router.delete(
-  "/:userId/companions/:companionId",
+  "/:userId/doctors/:doctorId",
   authMiddleware,
-  validate(deleteCompanionValidation),
-  WomenSafetyController.disconnectCompanion
+  EmergencyMedicalController.disconnectDoctor
+);
+
+/*
+|--------------------------------------------------------------------------
+| Blood Donors
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/:userId/donors",
+  authMiddleware,
+  validate(getDonorsValidation),
+  EmergencyMedicalController.getDonors
+);
+
+router.get(
+  "/:userId/donors/available",
+  authMiddleware,
+  validate(getDonorsValidation),
+  EmergencyMedicalController.getAvailableDonors
+);
+
+router.patch(
+  "/:userId/donors/refresh",
+  authMiddleware,
+  validate(getDonorsValidation),
+  EmergencyMedicalController.refreshDonors
+);
+
+router.post(
+  "/:userId/donors/connect",
+  authMiddleware,
+  validate(connectDonorValidation),
+  EmergencyMedicalController.connectDonor
+);
+
+router.delete(
+  "/:userId/donors/:donorId",
+  authMiddleware,
+  EmergencyMedicalController.disconnectDonor
 );
 
 /*
@@ -145,7 +172,7 @@ router.get(
   "/:userId/insight",
   authMiddleware,
   validate(insightValidation),
-  WomenSafetyController.getAIInsight
+  EmergencyMedicalController.getAIInsight
 );
 
 /*
@@ -158,28 +185,27 @@ router.post(
   "/:userId/sos",
   authMiddleware,
   validate(emergencySOSValidation),
-  WomenSafetyController.raiseSOS
+  EmergencyMedicalController.raiseSOS
 );
 
 router.get(
   "/:userId/emergency-status",
   authMiddleware,
-  validate(getDashboardValidation),
-  WomenSafetyController.getEmergencyStatus
+  EmergencyMedicalController.getEmergencyStatus
 );
 
 router.post(
-  "/:userId/rpf",
+  "/:userId/contact-doctor",
   authMiddleware,
-  validate(contactRPFValidation),
-  WomenSafetyController.contactRPF
+  validate(contactDoctorValidation),
+  EmergencyMedicalController.contactDoctor
 );
 
 router.post(
   "/:userId/helpline",
   authMiddleware,
   validate(helplineValidation),
-  WomenSafetyController.contactHelpline
+  EmergencyMedicalController.contactHelpline
 );
 
 module.exports = router;

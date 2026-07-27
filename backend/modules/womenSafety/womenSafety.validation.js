@@ -1,56 +1,146 @@
 const Joi = require("joi");
 
-const mongoId = Joi.string().hex().length(24);
+/*
+========================================
+COMMON USER ID
+========================================
+*/
+
+const userId = Joi.string().trim().required();
+
+/*
+========================================
+COMMON COMPANION ID
+========================================
+*/
+
+const companionId = Joi.string().trim().required();
+
+/*
+========================================
+DASHBOARD
+========================================
+*/
 
 const getDashboardValidation = {
   params: Joi.object({
-    userId: mongoId.required(),
+    userId,
   }),
 };
+
+/*
+========================================
+SAFETY SCORE
+========================================
+*/
 
 const getSafetyScoreValidation = {
   params: Joi.object({
-    userId: mongoId.required(),
+    userId,
   }),
 };
+
+/*
+========================================
+SAFE SEATS
+========================================
+*/
 
 const getSafeSeatsValidation = {
   params: Joi.object({
-    userId: mongoId.required(),
+    userId,
   }),
 };
+
+/*
+========================================
+GET COMPANIONS
+========================================
+*/
 
 const getCompanionsValidation = {
   params: Joi.object({
-    userId: mongoId.required(),
+    userId,
   }),
 };
 
+/*
+========================================
+DELETE COMPANION
+========================================
+*/
+
+const deleteCompanionValidation = {
+  params: Joi.object({
+    userId,
+    companionId,
+  }),
+};
+
+/*
+========================================
+CONNECT COMPANION
+========================================
+*/
+
 const connectCompanionValidation = {
   body: Joi.object({
-    userId: mongoId.required(),
+    name: Joi.string().trim().required(),
 
-    companionId: mongoId.required(),
+    age: Joi.number().min(18).max(100).required(),
 
-    message: Joi.string()
+    matchPercentage: Joi.number()
+      .min(0)
+      .max(100)
+      .required(),
+
+    coach: Joi.string().trim().required(),
+
+    seatNumber: Joi.string().trim().required(),
+
+    trainNumber: Joi.string()
       .trim()
-      .max(300)
+      .allow("")
+      .optional(),
+
+    trainName: Joi.string()
+      .trim()
+      .allow("")
+      .optional(),
+
+    sourceStation: Joi.string()
+      .trim()
+      .allow("")
+      .optional(),
+
+    destinationStation: Joi.string()
+      .trim()
+      .allow("")
+      .optional(),
+
+    trustScore: Joi.number()
+      .min(0)
+      .max(100)
+      .optional(),
+
+    profileImage: Joi.string()
+      .trim()
       .allow("")
       .optional(),
   }),
 };
 
+/*
+========================================
+SOS
+========================================
+*/
+
 const emergencySOSValidation = {
   body: Joi.object({
-    userId: mongoId.required(),
+    coach: Joi.string().trim().required(),
 
-    coach: Joi.string()
-      .trim()
-      .required(),
-
-    seatNumber: Joi.string()
-      .trim()
-      .required(),
+    seatNumber: Joi.string().trim().required(),
 
     latitude: Joi.number().optional(),
 
@@ -59,35 +149,36 @@ const emergencySOSValidation = {
     emergencyMessage: Joi.string()
       .trim()
       .max(500)
+      .allow("")
       .optional(),
   }),
 };
 
+/*
+========================================
+CONTACT RPF
+========================================
+*/
+
 const contactRPFValidation = {
   body: Joi.object({
-    userId: mongoId.required(),
+    coach: Joi.string().trim().required(),
 
-    coach: Joi.string()
-      .trim()
-      .required(),
+    seatNumber: Joi.string().trim().required(),
 
-    seatNumber: Joi.string()
-      .trim()
-      .required(),
-
-    reason: Joi.string()
-      .trim()
-      .required(),
+    reason: Joi.string().trim().required(),
   }),
 };
 
+/*
+========================================
+HELPLINE
+========================================
+*/
+
 const helplineValidation = {
   body: Joi.object({
-    userId: mongoId.required(),
-
-    issue: Joi.string()
-      .trim()
-      .required(),
+    issue: Joi.string().trim().required(),
 
     phoneNumber: Joi.string()
       .trim()
@@ -97,9 +188,15 @@ const helplineValidation = {
   }),
 };
 
+/*
+========================================
+AI INSIGHT
+========================================
+*/
+
 const insightValidation = {
   params: Joi.object({
-    userId: mongoId.required(),
+    userId,
   }),
 };
 
@@ -108,6 +205,7 @@ module.exports = {
   getSafetyScoreValidation,
   getSafeSeatsValidation,
   getCompanionsValidation,
+  deleteCompanionValidation,
   connectCompanionValidation,
   emergencySOSValidation,
   contactRPFValidation,
