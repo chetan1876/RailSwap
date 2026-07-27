@@ -9,9 +9,14 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-console.log("🔥 Firebase Initialized Successfully");
+(async () => {
+  try {
+    const snap = await db.collection("users").limit(1).get();
+    console.log("Firestore Working:", snap.size);
+  } catch (err) {
+    console.error("Firestore Test Error");
+    console.error(err);
+  }
+})();
 
-module.exports = {
-  app,
-  db,
-};
+module.exports = { app, db };
