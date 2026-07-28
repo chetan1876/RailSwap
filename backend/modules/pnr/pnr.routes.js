@@ -1,16 +1,24 @@
+console.log("✅ PNR Routes Loaded");
+
 const express = require("express");
 const router = express.Router();
 
-// Pure controller file ka path extension ke sath link karein
 const {
-    verifyPNRController,
-    getPNRHistoryController
-} = require("./pnr.controller.js"); 
+  verifyPNRController,
+  getPNRHistoryController,
+} = require("./pnr.controller");
 
+// ==========================================
 // Verify PNR
-router.post("/verify", verifyPNRController);
+// ==========================================
+router.post("/verify", (req, res, next) => {
+  console.log("✅ /verify route reached");
+  next();
+}, verifyPNRController);
 
-// Get All Verified PNR History
+// ==========================================
+// Get PNR History
+// ==========================================
 router.get("/history", getPNRHistoryController);
 
 module.exports = router;
