@@ -1,16 +1,5 @@
 const ApiResponse = require("../shared/apiResponse");
 
- HEAD
-const authMiddleware = (
-  req,
-  res,
-  next
-) => {
-  try {
-  const authHeader = req.headers.authorization;
-
-console.log("Authorization Header:", authHeader);
-
 const {
     verifyAccessToken,
 } = require("../utils/jwt");
@@ -73,7 +62,6 @@ const authMiddleware = (req, res, next) => {
         };
 
         next();
-
 
     }
 

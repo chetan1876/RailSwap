@@ -1,32 +1,30 @@
-
 require("dotenv").config();
-
-const womenSafetyRoutes = require("../modules/womenSafety/womenSafety.routes");
-const emergencyMedicalRoutes = require("../modules/emergencyMedical/emergencyMedical.routes");
-const notificationRoutes = require("../modules/notification/notification.routes");
-
 
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 
+// =========================
+// ROUTES
+// =========================
+
 const authRoutes = require("../modules/auth/auth.routes");
 const pnrRoutes = require("../modules/pnr/pnr.routes");
 const seatExchangeRoutes = require("../modules/seatExchange/seatExchange.routes");
-const notificationRoutes = require("../modules/notification/notification.routes");
+const womenSafetyRoutes = require("../modules/womenSafety/womenSafety.routes");
+const emergencyMedicalRoutes = require("../modules/emergencyMedical/emergencyMedical.routes");
+
 
 const app = express();
 
 /* =====================================================
-                    MIDDLEWARES
+                    MIDDLEWARE
 ===================================================== */
 
 app.use(helmet());
 
 app.use(
-
-
   cors({
     origin: [
       "http://localhost:5173",
@@ -47,18 +45,6 @@ app.use(
       "Authorization",
     ],
   })
-
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
-
-
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-
 );
 
 app.use(express.json());
@@ -71,63 +57,6 @@ app.use(
 
 app.use(morgan("dev"));
 
-
-
-/*
-========================================
-API ROUTES
-========================================
-*/
-
-app.use(
-  "/api/auth",
-  authRoutes
-);
-app.use(
-  "/api/women-safety",
-  womenSafetyRoutes
-);
-app.use(
-  "/api/emergency-medical",
-  emergencyMedicalRoutes
-);
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
-/*
-========================================
-HEALTH CHECK
-========================================
-*/
-
-/* =====================================================
-                    HEALTH CHECK
-===================================================== */
-
-
-app.get("/", (req, res) => {
-
-    return res.status(200).json({
-
-        success: true,
-
-        message: "Backend Server Running Successfully 🚀",
-
-    });
-
-});
-
-
-/* =====================================================
-                    API ROUTES
-===================================================== */
-
-app.use("/api/auth", authRoutes);
-app.use("/api/pnr", pnrRoutes);
-app.use("/api/seat-exchange", seatExchangeRoutes);
-app.use("/api/notifications", notificationRoutes);
-
 /* =====================================================
                     HEALTH CHECK
 ===================================================== */
@@ -135,9 +64,25 @@ app.use("/api/notifications", notificationRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "RailSwap Backend Running Successfully",
+    message: "RailSwap Backend Running Successfully 🚀",
   });
 });
+
+/* =====================================================
+                    API ROUTES
+===================================================== */
+
+app.use("/api/auth", authRoutes);
+
+app.use("/api/pnr", pnrRoutes);
+
+app.use("/api/seat-exchange", seatExchangeRoutes);
+
+app.use("/api/women-safety", womenSafetyRoutes);
+
+app.use("/api/emergency-medical", emergencyMedicalRoutes);
+
+
 
 /* =====================================================
                     404 HANDLER

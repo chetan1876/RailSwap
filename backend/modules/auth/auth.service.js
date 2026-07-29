@@ -1,50 +1,12 @@
 
-const authRepository = require("./auth.repository");
-const otpGenerator = require("otp-generator");
-const jwt = require("jsonwebtoken");
-const userRepository = require("../users/user.repository");
-const bcrypt = require("bcryptjs");
-
-
 const ApiResponse = require("../../shared/apiResponse");
 const logger = require("../../shared/logger");
-
-
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    {
-      id: user.id || user._id,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn:
-        process.env.JWT_EXPIRE || "15m",
-    }
-  );
-};
-
-const generateRefreshToken = (user) => {
-  return jwt.sign(
-    {
-      id: user.id || user._id,
-    },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn:
-        process.env
-          .REFRESH_TOKEN_EXPIRE ||
-        "7d",
-    }
-  );
-};
 
 const repository = require("./auth.repository");
 
 const {
     googleLogin,
 } = require("./googleAuth.service");
-
 
 const { registerDTO, loginDTO } = require("./auth.dto");
 
@@ -69,35 +31,14 @@ const {
 } = require("../../utils/sendMail");
 
 
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user =
-    await userRepository.createUser({
-      fullName,
-      email,
-      phoneNumber,
-      password: hashedPassword,
-      gender,
-      otp,
-      otpExpiry,
-    });
-
+/* =====================================================
+                    REGISTER
+===================================================== */
 
 const register = async (payload) => {
     let user = null;
 
     try {
-
-
-const verifyOtp = async (
-  email,
-  enteredOtp
-) => {
-  const user =
-    await userRepository.findUserByEmail(
-      email
-    );
 
         const {
             fullName,
@@ -106,126 +47,11 @@ const verifyOtp = async (
             password,
         } = payload;
 
-
         if (!fullName || !/^[A-Za-z\s]{2,50}$/.test(fullName.trim())) {
 
             return ApiResponse.badRequest(
                 "Full name must contain only letters and spaces (2-50 characters)."
             );
-
-
-  if (
-    user.otpExpiry <
-    new Date()
-  ) {
-    throw new Error(
-      "OTP expired"
-    );
-  }
-
-  user.isVerified = true;
-  user.status = "ACTIVE";
-
-  user.otp = null;
-  user.otpExpiry = null;
-
-  await userRepository.saveUser(user);
-
-  return user;
-};
-
-/* ===========================
-   LOGIN USER
-=========================== */
-
-const loginUser = async (
-  email,
-  password
-) => {
-  const user =
-    await userRepository.findUserByEmail(
-      email
-    );
-
-  if (!user) {
-    throw new Error(
-      "Invalid credentials"
-    );
-  }
-
-  if (
-    !user.isVerified
-  ) {
-    throw new Error(
-      "Please verify your account first"
-    );
-  }
-
-  const isPasswordMatched =
-    await bcrypt.compare(
-      password,
-      user.password
-    );
-
-  if (
-    !isPasswordMatched
-  ) {
-    throw new Error(
-      "Invalid credentials"
-    );
-  }
-
-  const accessToken =
-    generateAccessToken(
-      user
-    );
-
-  const refreshToken =
-    generateRefreshToken(
-      user
-    );
-
-  user.refreshToken =
-    refreshToken;
-
-  user.lastLogin =
-    new Date();
-
-  await userRepository.saveUser(user);
-
-  return {
-    user,
-    accessToken,
-    refreshToken,
-  };
-};
-
-/* ===========================
-   FORGOT PASSWORD
-=========================== */
-
-const forgotPassword =
-  async (email) => {
-    const user =
-      await userRepository.findUserByEmail(
-        email
-      );
-
-    if (!user) {
-      throw new Error(
-        "User not found"
-      );
-    }
-
-    const resetToken =
-      jwt.sign(
-        {
-          id: user.id || user._id,
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn:
-            "15m",
 
         }
 
@@ -236,25 +62,13 @@ const forgotPassword =
            const emailRegex =
                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-
-    await userRepository.saveUser(user);
-
            if (!email || !emailRegex.test(email.trim())) {
-
 
                return ApiResponse.badRequest(
                    "Please enter a valid email address."
                );
 
            }
-
-
-const logoutUser =
-  async (userId) => {
-    const user =
-      await userRepository.findUserById(
-        userId
-      );
 
         
 
@@ -412,18 +226,13 @@ const logoutUser =
             "Registration failed."
         );
 
-
     }
 
 };
 
-
-    await userRepository.saveUser(user);
-
 /* =====================================================
                     VERIFY OTP
 ===================================================== */
-
 
 const verifyOTP = async (payload) => {
 

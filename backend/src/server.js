@@ -17,10 +17,6 @@ app.listen(PORT, () => {
   console.log(`🚀 Server Running On Port ${PORT}`);
 });
 
-setInterval(() => {
-  console.log("Server is alive...");
-}, 10000);
-
 
 app.listen(PORT, () => {
     console.log(`
