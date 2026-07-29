@@ -1,167 +1,123 @@
-/*
-========================================
-JWT CONFIGURATION
-========================================
-*/
+/**
+ * =====================================================
+ *                  AUTH CONSTANTS
+ * =====================================================
+ */
 
-const JWT_CONFIG = {
-  ACCESS_TOKEN_EXPIRY: "15m",
-  REFRESH_TOKEN_EXPIRY: "7d",
+// JWT Expiry
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY = "7d";
 
-  ACCESS_TOKEN_COOKIE_NAME:
-    "accessToken",
+// OTP
+const OTP_LENGTH = 6;
+const OTP_EXPIRY_MINUTES = 10;
 
-  REFRESH_TOKEN_COOKIE_NAME:
-    "refreshToken",
+// Password Reset
+const RESET_TOKEN_EXPIRY_MINUTES = 15;
+
+// Password
+const PASSWORD_SALT_ROUNDS = 12;
+
+// Login Security
+const MAX_LOGIN_ATTEMPTS = 5;
+const ACCOUNT_LOCK_DURATION_MINUTES = 15;
+
+// Roles
+const USER_ROLES = {
+    USER: "USER",
+    ADMIN: "ADMIN",
+    SUPER_ADMIN: "SUPER_ADMIN",
 };
 
-/*
-========================================
-OTP CONFIGURATION
-========================================
-*/
-
-const OTP_CONFIG = {
-  LENGTH: 6,
-
-  EXPIRY_TIME:
-    10 * 60 * 1000, // 10 Minutes
-
-  MAX_ATTEMPTS: 5,
+// Account Status
+const ACCOUNT_STATUS = {
+    PENDING: "PENDING",
+    ACTIVE: "ACTIVE",
+    SUSPENDED: "SUSPENDED",
+    BLOCKED: "BLOCKED",
 };
 
-/*
-========================================
-PASSWORD RESET CONFIGURATION
-========================================
-*/
-
-const PASSWORD_RESET_CONFIG = {
-  TOKEN_EXPIRY:
-    15 * 60 * 1000, // 15 Minutes
+// Email Templates
+const EMAIL_TYPES = {
+    VERIFY_EMAIL: "VERIFY_EMAIL",
+    RESET_PASSWORD: "RESET_PASSWORD",
 };
 
-/*
-========================================
-LOGIN SECURITY CONFIGURATION
-========================================
-*/
-
-const LOGIN_SECURITY_CONFIG = {
-  MAX_FAILED_ATTEMPTS: 5,
-
-  ACCOUNT_LOCK_DURATION:
-    30 * 60 * 1000, // 30 Minutes
-};
-
-/*
-========================================
-COOKIE CONFIGURATION
-========================================
-*/
-
-const COOKIE_CONFIG = {
-  HTTP_ONLY: true,
-
-  SECURE:
-    process.env.NODE_ENV ===
-    "production",
-
-  SAME_SITE: "strict",
-
-  ACCESS_TOKEN_MAX_AGE:
-    15 * 60 * 1000,
-
-  REFRESH_TOKEN_MAX_AGE:
-    7 *
-    24 *
-    60 *
-    60 *
-    1000,
-};
-
-/*
-========================================
-AUTH STATUS MESSAGES
-========================================
-*/
-
+// HTTP Messages
 const AUTH_MESSAGES = {
-  REGISTER_SUCCESS:
-    "User registered successfully.",
 
-  LOGIN_SUCCESS:
-    "Login successful.",
+    REGISTER_SUCCESS:
+        "Registration successful. OTP sent to your email.",
 
-  LOGOUT_SUCCESS:
-    "Logout successful.",
+    EMAIL_ALREADY_EXISTS:
+        "Email already registered.",
 
-  OTP_SENT:
-    "OTP sent successfully.",
+    EMAIL_NOT_VERIFIED:
+        "Please verify your email first.",
 
-  OTP_VERIFIED:
-    "OTP verified successfully.",
+    EMAIL_VERIFIED:
+        "Email verified successfully.",
 
-  INVALID_CREDENTIALS:
-    "Invalid email or password.",
+    INVALID_OTP:
+        "Invalid OTP.",
 
-  ACCOUNT_NOT_VERIFIED:
-    "Please verify your account first.",
+    OTP_EXPIRED:
+        "OTP has expired.",
 
-  ACCOUNT_LOCKED:
-    "Account temporarily locked due to multiple failed login attempts.",
+    OTP_SENT:
+        "OTP sent successfully.",
 
-  INVALID_OTP:
-    "Invalid OTP.",
+    LOGIN_SUCCESS:
+        "Login successful.",
 
-  OTP_EXPIRED:
-    "OTP has expired.",
+    INVALID_CREDENTIALS:
+        "Invalid email or password.",
 
-  PASSWORD_RESET_SENT:
-    "Password reset link sent successfully.",
+    ACCOUNT_LOCKED:
+        "Account is temporarily locked. Try again later.",
 
-  PASSWORD_RESET_SUCCESS:
-    "Password reset successful.",
+    ACCOUNT_BLOCKED:
+        "Your account has been blocked.",
 
-  USER_NOT_FOUND:
-    "User not found.",
-};
+    ACCOUNT_SUSPENDED:
+        "Your account has been suspended.",
 
-/*
-========================================
-AUTH ROUTES PREFIX
-========================================
-*/
+    USER_NOT_FOUND:
+        "User not found.",
 
-const AUTH_ROUTES = {
-  BASE: "/api/auth",
+    PASSWORD_RESET_SENT:
+        "Password reset email sent successfully.",
 
-  REGISTER: "/register",
+    PASSWORD_RESET_SUCCESS:
+        "Password reset successful.",
 
-  LOGIN: "/login",
+    INVALID_RESET_TOKEN:
+        "Invalid or expired reset token.",
 
-  LOGOUT: "/logout",
+    LOGOUT_SUCCESS:
+        "Logout successful.",
 
-  VERIFY_OTP: "/verify-otp",
-
-  SEND_OTP: "/send-otp",
-
-  FORGOT_PASSWORD:
-    "/forgot-password",
-
-  RESET_PASSWORD:
-    "/reset-password",
-
-  REFRESH_TOKEN:
-    "/refresh-token",
+    SERVER_ERROR:
+        "Internal server error.",
 };
 
 module.exports = {
-  JWT_CONFIG,
-  OTP_CONFIG,
-  PASSWORD_RESET_CONFIG,
-  LOGIN_SECURITY_CONFIG,
-  COOKIE_CONFIG,
-  AUTH_MESSAGES,
-  AUTH_ROUTES,
+    ACCESS_TOKEN_EXPIRY,
+    REFRESH_TOKEN_EXPIRY,
+
+    OTP_LENGTH,
+    OTP_EXPIRY_MINUTES,
+
+    RESET_TOKEN_EXPIRY_MINUTES,
+
+    PASSWORD_SALT_ROUNDS,
+
+    MAX_LOGIN_ATTEMPTS,
+    ACCOUNT_LOCK_DURATION_MINUTES,
+
+    USER_ROLES,
+    ACCOUNT_STATUS,
+    EMAIL_TYPES,
+
+    AUTH_MESSAGES,
 };

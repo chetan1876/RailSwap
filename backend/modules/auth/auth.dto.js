@@ -1,153 +1,62 @@
-/*
-========================================
-REGISTER RESPONSE DTO
-========================================
-*/
-
-const registerResponseDTO = (
-  user
-) => {
-  return {
-    id: user._id,
-
-    fullName:
-      user.fullName,
-
-    email:
-      user.email,
-
-    phoneNumber:
-      user.phoneNumber,
-
-    role:
-      user.role,
-
-    isVerified:
-      user.isVerified,
-
-    status:
-      user.status,
-
-    createdAt:
-      user.createdAt,
-  };
+/**
+ * Register Response DTO
+ */
+const registerDTO = (user) => {
+    return {
+        uid: user.uid,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        status: user.status,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
+    };
 };
 
-/*
-========================================
-LOGIN RESPONSE DTO
-========================================
-*/
-
-const loginResponseDTO = (
-  user,
-  accessToken,
-  refreshToken
-) => {
-  return {
-    accessToken,
-
-    refreshToken,
-
-    user: {
-      id: user._id,
-
-      fullName:
-        user.fullName,
-
-      email:
-        user.email,
-
-      profileImage:
-        user.profileImage,
-
-      role:
-        user.role,
-
-      trustScore:
-        user.trustScore,
-
-      isVerified:
-        user.isVerified,
-
-      status:
-        user.status,
-    },
-  };
+/**
+ * Login Response DTO
+ */
+const loginDTO = (user, accessToken, refreshToken) => {
+    return {
+        user: {
+            uid: user.uid,
+            fullName: user.fullName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            status: user.status,
+            emailVerified: user.emailVerified,
+            profileImage: user.profileImage || null,
+        },
+        tokens: {
+            accessToken,
+            refreshToken,
+        },
+    };
 };
 
-/*
-========================================
-VERIFY OTP RESPONSE DTO
-========================================
-*/
-
-const verifyOtpResponseDTO =
-  (user) => {
+/**
+ * User Profile DTO
+ */
+const profileDTO = (user) => {
     return {
-      id: user._id,
-
-      fullName:
-        user.fullName,
-
-      email:
-        user.email,
-
-      isVerified:
-        user.isVerified,
-
-      status:
-        user.status,
+        uid: user.uid,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        status: user.status,
+        emailVerified: user.emailVerified,
+        profileImage: user.profileImage || null,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        lastLogin: user.lastLogin || null,
     };
-  };
-
-/*
-========================================
-FORGOT PASSWORD DTO
-========================================
-*/
-
-const forgotPasswordDTO =
-  () => {
-    return {
-      message:
-        "Password reset email sent successfully.",
-    };
-  };
-
-/*
-========================================
-RESET PASSWORD DTO
-========================================
-*/
-
-const resetPasswordDTO =
-  () => {
-    return {
-      message:
-        "Password reset successful.",
-    };
-  };
-
-/*
-========================================
-LOGOUT DTO
-========================================
-*/
-
-const logoutDTO =
-  () => {
-    return {
-      message:
-        "Logout successful.",
-    };
-  };
+};
 
 module.exports = {
-  registerResponseDTO,
-  loginResponseDTO,
-  verifyOtpResponseDTO,
-  forgotPasswordDTO,
-  resetPasswordDTO,
-  logoutDTO,
+    registerDTO,
+    loginDTO,
+    profileDTO,
 };

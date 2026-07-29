@@ -1,14 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-/**
- * ProtectedRoute — redirects to /login if user is not authenticated.
- * Now checks both user profile AND JWT token.
- */
 const ProtectedRoute = ({ children }) => {
-  const { user, token } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
-  if (!user || !token) {
+  if (loading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (!user || !isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

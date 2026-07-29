@@ -1,156 +1,285 @@
-const { body } = require("express-validator");
+const { body, validationResult } = require("express-validator");
+const ApiResponse = require("../../shared/apiResponse");
 
-/* ===========================
-   REGISTER VALIDATION
-=========================== */
+/* =====================================================
+                VALIDATION RESULT
+===================================================== */
 
-const registerValidation = [
-  body("fullName")
-    .trim()
-    .notEmpty()
-    .withMessage("Full name is required")
-    .isLength({ min: 3, max: 100 })
-    .withMessage(
-      "Full name must be between 3 and 100 characters"
-    ),
+const validate = (req, res, next) => {
 
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email address")
-    .normalizeEmail(),
+    const errors = validationResult(req);
 
-  body("phoneNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Phone number is required")
-    .matches(/^[6-9]\d{9}$/)
-    .withMessage(
-      "Please enter a valid Indian mobile number"
-    ),
+    if (!errors.isEmpty()) {
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required")
-    .isLength({ min: 8 })
-    .withMessage(
-      "Password must be at least 8 characters long"
-    )
-    .matches(/[A-Z]/)
-    .withMessage(
-      "Password must contain at least one uppercase letter"
-    )
-    .matches(/[a-z]/)
-    .withMessage(
-      "Password must contain at least one lowercase letter"
-    )
-    .matches(/[0-9]/)
-    .withMessage(
-      "Password must contain at least one number"
-    )
-    .matches(/[!@#$%^&*(),.?":{}|<>]/)
-    .withMessage(
-      "Password must contain at least one special character"
-    ),
+        return res
+            .status(422)
+            .json(
+                ApiResponse.validationError(
+                    errors.array()
+                )
+            );
 
-  body("gender")
-    .optional()
-    .isIn(["MALE", "FEMALE", "OTHER"])
-    .withMessage("Invalid gender value"),
+    }
+
+    next();
+
+};
+
+/* =====================================================
+                    REGISTER
+===================================================== */
+
+const register = [
+
+    body("fullName")
+        .trim()
+        .notEmpty()
+        .withMessage("Full name is required.")
+        .isLength({ min: 3, max: 50 })
+        .withMessage("Full name must be between 3 and 50 characters."),
+
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email address.")
+        .normalizeEmail(),
+
+    body("phoneNumber")
+        .trim()
+        .notEmpty()
+        .withMessage("Phone number is required.")
+        .isMobilePhone("en-IN")
+        .withMessage("Invalid phone number."),
+
+    body("password")
+        .notEmpty()
+        .withMessage("Password is required.")
+        .isLength({ min: 8 })
+        .withMessage("Password must be at least 8 characters.")
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/)
+        .withMessage(
+            "Password must contain uppercase, lowercase, number and special character."
+        ),
+
+    body("confirmPassword")
+        .notEmpty()
+        .withMessage("Confirm password is required.")
+        .custom((value, { req }) => {
+
+            if (value !== req.body.password) {
+
+                throw new Error(
+                    "Passwords do not match."
+                );
+
+            }
+
+            return true;
+
+        }),
+
+    validate,
+
 ];
 
-/* ===========================
-   LOGIN VALIDATION
-=========================== */
+/* =====================================================
+                    LOGIN
+===================================================== */
 
-const loginValidation = [
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email address"),
+const login = [
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    body("password")
+        .notEmpty()
+        .withMessage("Password is required."),
+
+    validate,
+
 ];
 
-/* ===========================
-   OTP VALIDATION
-=========================== */
+/* =====================================================
+                VERIFY OTP
+===================================================== */
 
-const verifyOtpValidation = [
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email address"),
+const verifyOTP = [
 
-  body("otp")
-    .trim()
-    .notEmpty()
-    .withMessage("OTP is required")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("OTP must be 6 digits")
-    .isNumeric()
-    .withMessage("OTP must contain only numbers"),
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    body("otp")
+        .trim()
+        .notEmpty()
+        .withMessage("OTP is required.")
+        .isLength({ min: 6, max: 6 })
+        .withMessage("OTP must be 6 digits.")
+        .isNumeric()
+        .withMessage("OTP must contain only numbers."),
+
+    validate,
+
 ];
 
-/* ===========================
-   FORGOT PASSWORD
-=========================== */
+/* =====================================================
+                RESEND OTP
+===================================================== */
 
-const forgotPasswordValidation = [
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Invalid email address"),
+const resendOTP = [
+
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    validate,
+
 ];
 
-/* ===========================
-   RESET PASSWORD
-=========================== */
+/* =====================================================
+            FORGOT PASSWORD
+===================================================== */
 
-const resetPasswordValidation = [
-  body("token")
-    .notEmpty()
-    .withMessage("Reset token is required"),
+const forgotPassword = [
 
-  body("newPassword")
-    .notEmpty()
-    .withMessage("New password is required")
-    .isLength({ min: 8 })
-    .withMessage(
-      "Password must be at least 8 characters long"
-    )
-    .matches(/[A-Z]/)
-    .withMessage(
-      "Password must contain at least one uppercase letter"
-    )
-    .matches(/[a-z]/)
-    .withMessage(
-      "Password must contain at least one lowercase letter"
-    )
-    .matches(/[0-9]/)
-    .withMessage(
-      "Password must contain at least one number"
-    )
-    .matches(/[!@#$%^&*(),.?":{}|<>]/)
-    .withMessage(
-      "Password must contain at least one special character"
-    ),
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    validate,
+
+];
+
+/* =====================================================
+            VERIFY RESET OTP
+===================================================== */
+
+const verifyResetOTP = [
+
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    body("otp")
+        .trim()
+        .notEmpty()
+        .withMessage("OTP is required.")
+        .isLength({ min: 6, max: 6 })
+        .withMessage("OTP must be 6 digits.")
+        .isNumeric()
+        .withMessage("OTP must contain only numbers."),
+
+    validate,
+
+];
+
+/* =====================================================
+            RESET PASSWORD
+===================================================== */
+
+const resetPassword = [
+
+    body("email")
+        .trim()
+        .notEmpty()
+        .withMessage("Email is required.")
+        .isEmail()
+        .withMessage("Invalid email.")
+        .normalizeEmail(),
+
+    body("otp")
+        .trim()
+        .notEmpty()
+        .withMessage("OTP is required.")
+        .isLength({ min: 6, max: 6 })
+        .withMessage("OTP must be 6 digits.")
+        .isNumeric()
+        .withMessage("OTP must contain only numbers."),
+
+    body("password")
+        .notEmpty()
+        .withMessage("Password is required.")
+        .isLength({ min: 8 })
+        .withMessage("Password must be at least 8 characters.")
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/)
+        .withMessage(
+            "Password must contain uppercase, lowercase, number and special character."
+        ),
+
+    body("confirmPassword")
+        .notEmpty()
+        .withMessage("Confirm password is required.")
+        .custom((value, { req }) => {
+
+            if (value !== req.body.password) {
+
+                throw new Error(
+                    "Passwords do not match."
+                );
+
+            }
+
+            return true;
+
+        }),
+
+    validate,
+
+];
+
+/* =====================================================
+                REFRESH TOKEN
+===================================================== */
+
+const refreshToken = [
+
+    body("refreshToken")
+        .notEmpty()
+        .withMessage("Refresh token is required."),
+
+    validate,
+
 ];
 
 module.exports = {
-  registerValidation,
-  loginValidation,
-  verifyOtpValidation,
-  forgotPasswordValidation,
-  resetPasswordValidation,
+
+    register,
+
+    login,
+
+    verifyOTP,
+
+    resendOTP,
+
+    forgotPassword,
+
+    verifyResetOTP,
+
+    resetPassword,
+
+    refreshToken,
+
 };

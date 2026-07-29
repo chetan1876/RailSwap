@@ -1,53 +1,167 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  "http://localhost:5000/api/auth";
+/* =====================================================
+                    AXIOS INSTANCE
+===================================================== */
+
+const API = axios.create({
+  baseURL: "http://localhost:5000/api/auth",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: false,
+});
+
+/* =====================================================
+                REQUEST INTERCEPTOR
+===================================================== */
+
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* =====================================================
+                RESPONSE INTERCEPTOR
+===================================================== */
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    return Promise.reject(
+      error.response?.data || error
+    );
+  }
+);
+
+/* =====================================================
+                    AUTH API
+===================================================== */
 
 export const authAPI = {
-  login: async (data) => {
-    return axios.post(
-      `${API_BASE_URL}/login`,
-      data
+  /* ---------------- Register ---------------- */
+
+  register: async (userData) => {
+    const response = await API.post(
+      "/register",
+      userData
     );
+
+    return response.data;
   },
 
-  register: async (data) => {
-    return axios.post(
-      `${API_BASE_URL}/register`,
-      data
+  /* ---------------- Verify OTP ---------------- */
+
+  verifyOtp: async (otpData) => {
+    const response = await API.post(
+      "/verify-otp",
+      otpData
     );
+
+    return response.data;
   },
 
-  verifyOtp: async (data) => {
-    return axios.post(
-      `${API_BASE_URL}/verify-otp`,
-      data
+  /* ---------------- Resend OTP ---------------- */
+
+  resendOtp: async (emailData) => {
+    const response = await API.post(
+      "/resend-otp",
+      emailData
     );
+
+    return response.data;
   },
 
-  forgotPassword: async (data) => {
-    return axios.post(
-      `${API_BASE_URL}/forgot-password`,
-      data
+
+    /* ---------------- Forgot Password ---------------- */
+
+  forgotPassword: async (emailData) => {
+    const response = await API.post(
+      "/forgot-password",
+      emailData
     );
+
+    return response.data;
   },
 
-  resetPassword: async (data) => {
-    return axios.post(
-      `${API_BASE_URL}/reset-password`,
-      data
+  /* ---------------- Verify Reset OTP ---------------- */
+
+  verifyResetOtp: async (otpData) => {
+    const response = await API.post(
+      "/verify-reset-otp",
+      otpData
     );
+
+    return response.data;
   },
 
-  logout: async (token) => {
-    return axios.post(
-      `${API_BASE_URL}/logout`,
-      {},
+  /* ---------------- Reset Password ---------------- */
+
+  resetPassword: async (resetData) => {
+    const response = await API.post(
+      "/reset-password",
+      resetData
+    );
+
+    return response.data;
+  },
+
+  /* ---------------- Login ---------------- */
+
+  login: async (loginData) => {
+    const response = await API.post(
+      "/login",
+      loginData
+    );
+
+    return response.data;
+  },
+
+  /* ---------------- Google Login ---------------- */
+
+googleLogin: async (idToken) => {
+
+  const response = await API.post(
+    "/google",
+    {
+      idToken,
+    }
+  );
+
+  return response.data;
+
+},
+
+  /* ---------------- Refresh Token ---------------- */
+
+  refreshToken: async (refreshToken) => {
+    const response = await API.post(
+      "/refresh-token",
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        refreshToken,
       }
     );
+
+    return response.data;
+  },
+
+  /* ---------------- Logout ---------------- */
+
+  logout: async () => {
+    const response = await API.post(
+      "/logout"
+    );
+
+    return response.data;
   },
 };
+
+export default API;

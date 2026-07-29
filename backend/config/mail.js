@@ -5,8 +5,13 @@ console.log("EMAIL_PASS =", process.env.EMAIL_PASS ? "Loaded" : "Not Loaded");
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
+
   port: parseInt(process.env.EMAIL_PORT, 10) || 587,
   secure: false, // true for 465, false for 587 (STARTTLS)
+
+
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
 
   auth: {
     user: process.env.EMAIL_USER,
@@ -31,11 +36,7 @@ transporter.verify((error, success) => {
   }
 });
 
-/*
-===================================
-Send Email Utility
-===================================
-*/
+
 
 const sendEmail = async ({
   to,

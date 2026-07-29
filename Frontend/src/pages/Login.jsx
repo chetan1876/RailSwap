@@ -1,139 +1,414 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { GoogleLogin } from "@react-oauth/google";
+
 import { useAuth } from "../context/AuthContext";
 import { authAPI } from "../services/auth.service";
+
 import "../styles/auth.css";
 
-const Login = () => {
+function Login() {
+
   const navigate = useNavigate();
+
   const { login } = useAuth();
 
+  /* =====================================================
+                      STATES
+  ===================================================== */
+
   const [formData, setFormData] = useState({
+
     email: "",
+
     password: "",
-    remember: false,
+
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+  
+
+  const [error, setError] =
+    useState("");
+  /* =====================================================
+                  INPUT CHANGE
+  ===================================================== */
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-    if (error) setError("");
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const { name, value } = e.target;
+
+  /* =====================================
+              EMAIL VALIDATION
+  ===================================== */
+
+  if (name === "email") {
+
+    // Space allow nahi hoga
+    if (/\s/.test(value)) {
+      return;
+    }
+
+    // Sirf valid email characters allow
+    if (!/^[A-Za-z0-9@._+-]*$/.test(value)) {
+      return;
+    }
+
+    // Maximum 100 characters
+    if (value.length > 100) {
+      return;
+    }
+
+  }
+
+  /* =====================================
+            PASSWORD VALIDATION
+  ===================================== */
+
+  if (name === "password") {
+
+    // Maximum 20 characters
+    if (value.length > 20) {
+      return;
+    }
+
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  setError("");
+
+};
+
+  /* =====================================================
+                    LOGIN
+  ===================================================== */
+
+ const handleLogin = async (e) => {
+
+  e.preventDefault();
+
+  setError("");
+
+  if (!formData.email || !formData.password) {
+
+    setError("Please fill all fields.");
+
+    return;
+
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(formData.email.trim())) {
+
+    setError("Please enter a valid email address.");
+
+    return;
+
+  }
+
+  try {
+
+    setLoading(true);
+
+    const response = await authAPI.login(formData);
+
+    if (!response.success) {
+
+      setError(response.message || "Login failed.");
+
+      return;
+
+    }
+
+    login(response.data);
+
+    navigate("/dashboard");
+
+  } catch (error) {
+
+    setError(error.message || "Something went wrong.");
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
+
+/* =====================================================
+                GOOGLE LOGIN
+===================================================== */
+
+const handleGoogleLogin = async (credentialResponse) => {
+
+  try {
+
+    setLoading(true);
+
     setError("");
 
-    try {
-  const res = await authAPI.login({
-    email: formData.email,
-    password: formData.password,
-  });
-  console.log("LOGIN RESPONSE:", res.data);
+    const response = await authAPI.googleLogin(
+      credentialResponse.credential
+    );
 
-  const { user, token } = res.data;
+    if (!response.success) {
 
-  login(user, token);
+      setError(response.message);
 
-  navigate("/dashboard");
-} catch (err) {
-  const msg =
-    err.response?.data?.message ||
-    "Login failed. Please check your credentials and try again.";
+      return;
 
-  setError(msg);
-}finally {
-      setIsLoading(false);
     }
-  };
 
-  return (
-    <div className="auth-page">
+    login(response.data);
+
+    navigate("/dashboard");
+
+  } catch (error) {
+
+    setError(
+
+      error.response?.data?.message ||
+
+      error.message ||
+
+      "Google Login Failed."
+
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
+
+  /* =====================================================
+                        UI
+  ===================================================== */
+
+ return (
+  <div className="auth-container">
+
+    {/* ================= LEFT SIDE ================= */}
+
+    <div className="auth-left">
+
+     <div className="auth-left-card">
+
+      <div className="brand-logo">
+        🚆 RailSwap
+      </div>
+
+      <h1>
+        Travel Smarter,
+        <br />
+        Exchange Seats
+        <br />
+        Seamlessly.
+      </h1>
+
+      <p>
+        India's AI-powered railway seat exchange platform
+        built to help passengers find better seats,
+        verified travel companions and smart journey
+        assistance in real time.
+      </p>
+
+      <div className="feature-list">
+
+        <div className="feature-item">
+          ✅ AI Seat Recommendation
+        </div>
+
+        <div className="feature-item">
+          ✅ Secure Authentication
+        </div>
+
+        <div className="feature-item">
+          ✅ PNR Verification
+        </div>
+
+        <div className="feature-item">
+          ✅ Journey Companion
+        </div>
+
+        <div className="feature-item">
+          ✅ Emergency Assistance
+        </div>
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+    {/* ================= RIGHT SIDE ================= */}
+
+    <div className="auth-right">
+
       <div className="auth-card">
-        <h1>Welcome Back</h1>
-        <p>Login to access your RailSwap account.</p>
 
-        {error && (
-          <div
-            className="auth-error"
-            style={{
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: "8px",
-              padding: "10px 14px",
-              marginBottom: "16px",
-              color: "#dc2626",
-              fontSize: "14px",
-            }}
-          >
-            {error}
-          </div>
-        )}
+        <h2>Welcome Back</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
+        <p>Login to your RailSwap account</p>
+
+        <form onSubmit={handleLogin}>
+
+          <div className="input-group">
+
             <input
               type="email"
               name="email"
-              placeholder="Enter email"
+              placeholder="Email Address"
               value={formData.email}
               onChange={handleChange}
-              required
-              disabled={isLoading}
             />
+
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
+          <div className="input-group password-group">
+
             <input
-              type="password"
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
               name="password"
-              placeholder="Enter password"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              required
-              disabled={isLoading}
             />
+
+            <span
+              className="eye-icon"
+              onClick={() =>
+                setShowPassword(
+                  !showPassword
+                )
+              }
+            >
+              {showPassword ? (
+                <FaEyeSlash />
+              ) : (
+                <FaEye />
+              )}
+            </span>
+
           </div>
 
-          <div className="auth-options">
-            <label className="remember">
-              <input
-                type="checkbox"
-                name="remember"
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-              Remember Me
-            </label>
-            <Link to="/forgot-password">Forgot Password?</Link>
+          {error && (
+            <p className="error-message">
+              {error}
+            </p>
+          )}
+
+          <div className="auth-links">
+
+            <Link to="/forgot-password">
+              Forgot Password?
+            </Link>
+
           </div>
 
           <button
             type="submit"
             className="auth-btn"
-            disabled={isLoading}
-            style={{ opacity: isLoading ? 0.7 : 1 }}
+            disabled={loading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
+
+          {/* ================= Divider ================= */}
+
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    margin: "20px 0",
+  }}
+>
+
+  <hr style={{ flex: 1 }} />
+
+  <span
+    style={{
+      margin: "0 10px",
+      color: "#777",
+      fontSize: "14px",
+    }}
+  >
+    OR
+  </span>
+
+  <hr style={{ flex: 1 }} />
+
+</div>
+
+{/* ================= Google Login ================= */}
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "20px",
+  }}
+>
+
+  <GoogleLogin
+
+    onSuccess={handleGoogleLogin}
+
+    onError={() =>
+      setError("Google Login Failed.")
+    }
+
+    theme="outline"
+
+    size="large"
+
+    shape="pill"
+
+    width="320"
+
+  />
+
+</div>
+
+          <div className="auth-footer">
+
+            Don't have an account?
+
+            <Link to="/register">
+              Register
+            </Link>
+
+          </div>
+
         </form>
 
-        <p className="auth-footer">
-          Don't have an account?{" "}
-          <Link to="/register">Register</Link>
-        </p>
       </div>
+
     </div>
-  );
-};
+
+  </div>
+);
+
+}
 
 export default Login;
