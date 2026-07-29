@@ -13,7 +13,31 @@ import "./styles/landing.css";
 import "./styles/auth.css";
 import "./styles/dashboard.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+// Register Firebase Messaging Service Worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registration =
+        await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js"
+        );
+
+      console.log(
+        "Firebase Service Worker Registered:",
+        registration
+      );
+    } catch (error) {
+      console.error(
+        "Firebase Service Worker Registration Failed:",
+        error
+      );
+    }
+  });
+}
+
+ReactDOM.createRoot(
+  document.getElementById("root")
+).render(
   <React.StrictMode>
     <GoogleOAuthProvider
       clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}

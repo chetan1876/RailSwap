@@ -1,28 +1,62 @@
-const SeatExchange = require("./seatExchange.model");
+const { db } = require("../../config/firebase");
 
 // Create Seat Exchange Request
 const createRequest = async (payload) => {
-  return await SeatExchange.create(payload);
+  const docRef = await db.collection("seatExchange").add({
+    ...payload,
+    status: "PENDING",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  return {
+    id: docRef.id,
+    ...payload,
+    status: "PENDING",
+  };
 };
 
 // Get All Requests
 const getAllRequests = async () => {
-  return await SeatExchange.find()
-    .populate("user", "name email")
-    .populate("matchedUser", "name email")
-    .sort({ createdAt: -1 });
+  const snapshot = await db
+    .collection("seatExchange")
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };
 
 // Get Request By ID
 const getRequestById = async (id) => {
-  return await SeatExchange.findById(id)
-    .populate("user", "name email")
-    .populate("matchedUser", "name email");
+  const doc = await db.collection("seatExchange").doc(id).get();
+
+  if (!doc.exists) return null;
+
+  return {
+    id: doc.id,
+    ...doc.data(),
+  };
 };
 
 // Get User Request
 const getUserRequest = async (userId) => {
-  return await SeatExchange.findOne({ user: userId });
+  const snapshot = await db
+    .collection("seatExchange")
+    .where("user", "==", userId)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+
+  const doc = snapshot.docs[0];
+
+  return {
+    id: doc.id,
+    ...doc.data(),
+  };
 };
 
 // Find Matching Passengers
@@ -33,26 +67,40 @@ const findMatches = async (
   destinationStation,
   preferredSeat
 ) => {
-  return await SeatExchange.find({
-    trainNumber,
-    journeyDate,
-    boardingStation,
-    destinationStation,
-    seatType: preferredSeat,
-    status: "PENDING",
-  });
+  const snapshot = await db
+    .collection("seatExchange")
+    .where("trainNumber", "==", trainNumber)
+    .where("journeyDate", "==", journeyDate)
+    .where("boardingStation", "==", boardingStation)
+    .where("destinationStation", "==", destinationStation)
+    .where("seatType", "==", preferredSeat)
+    .where("status", "==", "PENDING")
+    .get();
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };
 
 // Update Request
 const updateRequest = async (id, data) => {
-  return await SeatExchange.findByIdAndUpdate(id, data, {
-    new: true,
+  await db.collection("seatExchange").doc(id).update({
+    ...data,
+    updatedAt: new Date(),
   });
+
+  return await getRequestById(id);
 };
 
 // Delete Request
 const deleteRequest = async (id) => {
-  return await SeatExchange.findByIdAndDelete(id);
+  await db.collection("seatExchange").doc(id).delete();
+
+  return {
+    success: true,
+    message: "Request deleted successfully",
+  };
 };
 
 module.exports = {
