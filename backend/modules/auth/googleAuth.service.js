@@ -55,6 +55,9 @@ const decodedPayload = JSON.parse(
         });
 
         const payload = ticket.getPayload();
+        console.log("================================");
+        console.log("Payload Audience:", payload.aud);
+        console.log("ENV Client ID:", process.env.GOOGLE_CLIENT_ID);
 
         const email =
             payload.email.toLowerCase();

@@ -35,6 +35,11 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+console.log(
+  "Frontend Client ID:",
+  import.meta.env.VITE_GOOGLE_CLIENT_ID
+);
+
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
