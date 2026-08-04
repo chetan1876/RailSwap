@@ -14,7 +14,10 @@ const pnrRoutes = require("../modules/pnr/pnr.routes");
 const seatExchangeRoutes = require("../modules/seatExchange/seatExchange.routes");
 const womenSafetyRoutes = require("../modules/womenSafety/womenSafety.routes");
 const emergencyMedicalRoutes = require("../modules/emergencyMedical/emergencyMedical.routes");
-
+const chatbotRoutes = require("../modules/chatbot/chatbot.routes");
+const aiRecommendationRoutes = require("../modules/aiRecommendation/aiRecommendation.routes");
+const journeyRoutes = require("../modules/journeyCompanion/journey.routes");
+const crowdPredictionRoutes = require("../modules/crowdPrediction/crowdPrediction.routes");
 
 const app = express();
 
@@ -81,6 +84,14 @@ app.use("/api/seat-exchange", seatExchangeRoutes);
 app.use("/api/women-safety", womenSafetyRoutes);
 
 app.use("/api/emergency-medical", emergencyMedicalRoutes);
+
+app.use("/api/chatbot", chatbotRoutes);
+
+app.use("/api/ai-recommendation", aiRecommendationRoutes);
+
+app.use("/api/journey", journeyRoutes);
+
+app.use("/api/crowd-prediction", crowdPredictionRoutes);
 
 
 

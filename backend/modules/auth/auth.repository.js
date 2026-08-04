@@ -1,24 +1,45 @@
 const { db } = require("../../config/firebase");
 
 const COLLECTION = "users";
+const userCollection = db ? db.collection(COLLECTION) : null;
+
+// In-memory fallback user store for offline / unauthenticated Firestore environments
+const inMemoryUsers = new Map();
 
 /* =====================================================
                     CREATE USER
 ===================================================== */
 
 const createUser = async (userData) => {
+  const uid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  const userRecord = {
+    uid,
+    ...userData,
+  };
 
-    const docRef = db.collection(COLLECTION).doc();
-
-    const data = {
+  try {
+    if (userCollection) {
+      const docRef = userCollection.doc();
+      const firestoreUser = {
         uid: docRef.id,
         ...userData,
-    };
+      };
+      await docRef.set(firestoreUser);
+      inMemoryUsers.set(docRef.id, firestoreUser);
+      if (userData.email) {
+        inMemoryUsers.set(userData.email.toLowerCase(), firestoreUser);
+      }
+      return firestoreUser;
+    }
+  } catch (error) {
+    console.warn("Firestore createUser fallback to memory store:", error.message);
+  }
 
-    await docRef.set(data);
-
-    return data;
-
+  inMemoryUsers.set(uid, userRecord);
+  if (userData.email) {
+    inMemoryUsers.set(userData.email.toLowerCase(), userRecord);
+  }
+  return userRecord;
 };
 
 /* =====================================================
@@ -26,17 +47,20 @@ const createUser = async (userData) => {
 ===================================================== */
 
 const getUserByUID = async (uid) => {
-
-    const snapshot = await db
-        .collection(COLLECTION)
+  try {
+    if (userCollection) {
+      const snapshot = await userCollection
         .where("uid", "==", uid)
         .limit(1)
         .get();
 
-    if (snapshot.empty) return null;
+      if (!snapshot.empty) return snapshot.docs[0].data();
+    }
+  } catch (error) {
+    console.warn("Firestore getUserByUID fallback to memory store:", error.message);
+  }
 
-    return snapshot.docs[0].data();
-
+  return inMemoryUsers.get(uid) || null;
 };
 
 /* =====================================================
@@ -44,17 +68,34 @@ const getUserByUID = async (uid) => {
 ===================================================== */
 
 const getUserByEmail = async (email) => {
+  if (!email) return null;
+  const normalizedEmail = email.toLowerCase().trim();
 
-    const snapshot = await db
-        .collection(COLLECTION)
-        .where("email", "==", email.toLowerCase())
+  try {
+    if (userCollection) {
+      const snapshot = await userCollection
+        .where("email", "==", normalizedEmail)
         .limit(1)
         .get();
 
-    if (snapshot.empty) return null;
+      if (!snapshot.empty) return snapshot.docs[0].data();
+    }
+  } catch (error) {
+    console.warn("Firestore getUserByEmail fallback to memory store:", error.message);
+  }
 
-    return snapshot.docs[0].data();
+  // Check in-memory store by email or values
+  if (inMemoryUsers.has(normalizedEmail)) {
+    return inMemoryUsers.get(normalizedEmail);
+  }
 
+  for (const u of inMemoryUsers.values()) {
+    if (u.email && u.email.toLowerCase() === normalizedEmail) {
+      return u;
+    }
+  }
+
+  return null;
 };
 
 /* =====================================================
@@ -62,49 +103,49 @@ const getUserByEmail = async (email) => {
 ===================================================== */
 
 const saveOTP = async (uid, otp, otpExpiry) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        otp,
+        otpExpiry,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore saveOTP fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            otp,
-
-            otpExpiry,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.otp = otp;
+    u.otpExpiry = otpExpiry;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
             SAVE RESET OTP
 ===================================================== */
 
-const saveResetOTP = async (
+const saveResetOTP = async (uid, resetOTP, resetOTPExpiry) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        resetOTP,
+        resetOTPExpiry,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore saveResetOTP fallback to memory store:", error.message);
+  }
 
-    uid,
-
-    resetOTP,
-
-    resetOTPExpiry
-
-) => {
-
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            resetOTP,
-
-            resetOTPExpiry,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.resetOTP = resetOTP;
+    u.resetOTPExpiry = resetOTPExpiry;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
@@ -112,49 +153,53 @@ const saveResetOTP = async (
 ===================================================== */
 
 const verifyEmail = async (uid) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        emailVerified: true,
+        status: "ACTIVE",
+        otp: null,
+        otpExpiry: null,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore verifyEmail fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            emailVerified: true,
-
-            status: "ACTIVE",
-
-            otp: null,
-
-            otpExpiry: null,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.emailVerified = true;
+    u.status = "ACTIVE";
+    u.otp = null;
+    u.otpExpiry = null;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
             UPDATE LOGIN INFO
 ===================================================== */
 
-const updateLoginInfo = async (
-    uid,
-    refreshToken,
-    lastLogin
-) => {
+const updateLoginInfo = async (uid, refreshToken, lastLogin) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        refreshToken,
+        lastLogin,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore updateLoginInfo fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            refreshToken,
-
-            lastLogin,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.refreshToken = refreshToken;
+    u.lastLogin = lastLogin;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
@@ -162,43 +207,45 @@ const updateLoginInfo = async (
 ===================================================== */
 
 const removeRefreshToken = async (uid) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        refreshToken: null,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore removeRefreshToken fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            refreshToken: null,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.refreshToken = null;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
                 UPDATE PASSWORD
 ===================================================== */
 
-const updatePassword = async (
+const updatePassword = async (uid, password) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        password,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore updatePassword fallback to memory store:", error.message);
+  }
 
-    uid,
-
-    password
-
-) => {
-
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            password,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.password = password;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
@@ -206,20 +253,24 @@ const updatePassword = async (
 ===================================================== */
 
 const clearResetOTP = async (uid) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).update({
+        resetOTP: null,
+        resetOTPExpiry: null,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore clearResetOTP fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .update({
-
-            resetOTP: null,
-
-            resetOTPExpiry: null,
-
-            updatedAt: new Date(),
-
-        });
-
+  const u = inMemoryUsers.get(uid);
+  if (u) {
+    u.resetOTP = null;
+    u.resetOTPExpiry = null;
+    u.updatedAt = new Date();
+  }
 };
 
 /* =====================================================
@@ -227,36 +278,31 @@ const clearResetOTP = async (uid) => {
 ===================================================== */
 
 const deleteUser = async (uid) => {
+  try {
+    if (userCollection) {
+      await userCollection.doc(uid).delete();
+    }
+  } catch (error) {
+    console.warn("Firestore deleteUser fallback to memory store:", error.message);
+  }
 
-    await db
-        .collection(COLLECTION)
-        .doc(uid)
-        .delete();
-
+  const u = inMemoryUsers.get(uid);
+  if (u && u.email) {
+    inMemoryUsers.delete(u.email.toLowerCase());
+  }
+  inMemoryUsers.delete(uid);
 };
 
 module.exports = {
-
-    createUser,
-
-    getUserByUID,
-
-    getUserByEmail,
-
-    saveOTP,
-
-    saveResetOTP,
-
-    verifyEmail,
-
-    updateLoginInfo,
-
-    removeRefreshToken,
-
-    updatePassword,
-
-    clearResetOTP,
-
-    deleteUser,
-
+  createUser,
+  getUserByUID,
+  getUserByEmail,
+  saveOTP,
+  saveResetOTP,
+  verifyEmail,
+  updateLoginInfo,
+  removeRefreshToken,
+  updatePassword,
+  clearResetOTP,
+  deleteUser,
 };

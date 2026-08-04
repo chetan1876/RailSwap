@@ -177,10 +177,35 @@ Based on these details, generate the recommendations following the system instru
     const savedRecord = await aiRepository.saveRecommendation(recordToSave);
     return savedRecord;
   } catch (error) {
-    console.error("Service failed to generate recommendation:", error);
-    throw ApiError.internal(
-      error.message || "Failed to generate AI recommendations.",
-    );
+    console.error("Service failed to generate recommendation:", error.message);
+
+    // Classify known Gemini / network errors into clear user-facing messages
+    const msg = error.message || "";
+
+    if (msg.includes("GEMINI_API_KEY is not configured") || msg.includes("GEMINI_API_KEY")) {
+      throw ApiError.internal("Gemini API key is missing. Add GEMINI_API_KEY to your .env file. Get a free key at https://aistudio.google.com/apikey");
+    }
+    if (msg.includes("API_KEY_INVALID") || msg.includes("invalid api key") || msg.includes("API key not valid")) {
+      throw ApiError.internal("Invalid Gemini API key. Please check your GEMINI_API_KEY in .env.");
+    }
+    if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("429")) {
+      throw ApiError.internal("Gemini API quota exceeded. Please wait or upgrade your plan.");
+    }
+    if (msg.includes("models/") && (msg.includes("not found") || msg.includes("404"))) {
+      throw ApiError.internal("Gemini model 'gemini-1.5-flash' not found. Verify the model name or update GEMINI_API_KEY.");
+    }
+    if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND") || msg.includes("ETIMEDOUT") || msg.includes("network")) {
+      throw ApiError.internal("Network error: Unable to reach the Gemini AI service. Check your internet connection.");
+    }
+    if (msg.includes("invalid format") || msg.includes("not valid JSON")) {
+      throw ApiError.internal("AI returned an unreadable response. Please try again.");
+    }
+    if (msg.includes("SERVICE_UNAVAILABLE") || msg.includes("503")) {
+      throw ApiError.internal("Gemini AI service is temporarily unavailable. Please try again shortly.");
+    }
+
+    // Re-throw the real error message for any other case
+    throw ApiError.internal(error.message || "Failed to generate AI recommendations.");
   }
 };
 

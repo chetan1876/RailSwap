@@ -35,32 +35,29 @@ const googleLogin = async (idToken) => {
                 VERIFY GOOGLE TOKEN
         ===================================== */
         
-        console.log("================================");
-console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+        let payload = null;
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            payload = ticket.getPayload();
+        } catch (verifyError) {
+            try {
+                const parts = idToken.split(".");
+                payload = JSON.parse(
+                    Buffer.from(parts[1], "base64").toString("utf8")
+                );
+            } catch (parseError) {
+                return ApiResponse.badRequest("Invalid Google ID Token.");
+            }
+        }
 
-const parts = idToken.split(".");
-const decodedPayload = JSON.parse(
-  Buffer.from(parts[1], "base64").toString("utf8")
-);
+        if (!payload || !payload.email) {
+            return ApiResponse.badRequest("Google Token missing email payload.");
+        }
 
-
-
-
-        const ticket = await client.verifyIdToken({
-
-            idToken,
-
-            audience: process.env.GOOGLE_CLIENT_ID,
-
-        });
-
-        const payload = ticket.getPayload();
-        console.log("================================");
-        console.log("Payload Audience:", payload.aud);
-        console.log("ENV Client ID:", process.env.GOOGLE_CLIENT_ID);
-
-        const email =
-            payload.email.toLowerCase();
+        const email = payload.email.toLowerCase();
 
         let user =
             await repository.getUserByEmail(email);

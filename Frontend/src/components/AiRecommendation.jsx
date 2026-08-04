@@ -362,10 +362,11 @@ function AiRecommendation() {
         setErrorMsg(response.message || "Failed to generate recommendations.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("[AiRecommendation] generateRecommendation error:", err);
       setErrorMsg(
-        err.response?.data?.message ||
-          "An error occurred while calling the AI recommendation engine.",
+        err.message ||
+          err.response?.data?.message ||
+          "An error occurred while calling the AI recommendation engine."
       );
     } finally {
       setLoading(false);

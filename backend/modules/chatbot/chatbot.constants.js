@@ -12,7 +12,7 @@ module.exports = {
     SYSTEM: "system",
   },
 
-  MODEL: "gemini-flash-lite-latest",
+  MODEL: "gemini-1.5-flash",
 
   MAX_HISTORY: 20,
 

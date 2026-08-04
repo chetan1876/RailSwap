@@ -3,7 +3,7 @@
 const aiService = require("./aiRecommendation.service");
 const bookingService = require("./booking.service");
 const ApiResponse = require("../../shared/apiResponse");
-const { logger } = require("../../shared/logger");
+const logger = require("../../shared/logger");
 
 /**
  * POST /
@@ -11,25 +11,20 @@ const { logger } = require("../../shared/logger");
  */
 const getRecommendation = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Generating AI Recommendation", { userEmail, body: req.body });
 
     const result = await aiService.generateRecommendation(userEmail, req.body);
 
-    return ApiResponse.success(
-      res,
-      "AI Recommendation generated successfully.",
-      result,
-      201,
+    return res.status(201).json(
+      ApiResponse.success("AI Recommendation generated successfully.", result, 201)
     );
   } catch (error) {
-    logger.error("Error in getRecommendation controller", {
-      error: error.message,
-    });
+    logger.error("Error in getRecommendation controller", { error: error.message });
     next(error);
   }
 };
@@ -40,20 +35,17 @@ const getRecommendation = async (req, res, next) => {
  */
 const getHistory = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Fetching recommendation history", { userEmail });
 
     const history = await aiService.getHistory(userEmail);
 
-    return ApiResponse.success(
-      res,
-      "Recommendation history retrieved successfully.",
-      history,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Recommendation history retrieved successfully.", history)
     );
   } catch (error) {
     logger.error("Error in getHistory controller", { error: error.message });
@@ -67,9 +59,9 @@ const getHistory = async (req, res, next) => {
  */
 const getRecentRecommendations = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
@@ -77,16 +69,11 @@ const getRecentRecommendations = async (req, res, next) => {
 
     const recent = await aiService.getRecent(userEmail, limit);
 
-    return ApiResponse.success(
-      res,
-      "Recent recommendations retrieved successfully.",
-      recent,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Recent recommendations retrieved successfully.", recent)
     );
   } catch (error) {
-    logger.error("Error in getRecentRecommendations controller", {
-      error: error.message,
-    });
+    logger.error("Error in getRecentRecommendations controller", { error: error.message });
     next(error);
   }
 };
@@ -97,17 +84,15 @@ const getRecentRecommendations = async (req, res, next) => {
  */
 const searchRecommendations = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     const query = req.query.q;
     if (!query) {
-      return ApiResponse.error(
-        res,
-        "Search query parameter 'q' is required.",
-        400,
+      return res.status(400).json(
+        ApiResponse.badRequest("Search query parameter 'q' is required.")
       );
     }
 
@@ -115,16 +100,11 @@ const searchRecommendations = async (req, res, next) => {
 
     const results = await aiService.searchRecommendations(userEmail, query);
 
-    return ApiResponse.success(
-      res,
-      "Recommendations search completed successfully.",
-      results,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Recommendations search completed successfully.", results)
     );
   } catch (error) {
-    logger.error("Error in searchRecommendations controller", {
-      error: error.message,
-    });
+    logger.error("Error in searchRecommendations controller", { error: error.message });
     next(error);
   }
 };
@@ -135,27 +115,22 @@ const searchRecommendations = async (req, res, next) => {
  */
 const getRecommendationDetails = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     const { id } = req.params;
 
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Fetching recommendation details", { userEmail, id });
 
     const details = await aiService.getById(id, userEmail);
 
-    return ApiResponse.success(
-      res,
-      "Recommendation details retrieved successfully.",
-      details,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Recommendation details retrieved successfully.", details)
     );
   } catch (error) {
-    logger.error("Error in getRecommendationDetails controller", {
-      error: error.message,
-    });
+    logger.error("Error in getRecommendationDetails controller", { error: error.message });
     next(error);
   }
 };
@@ -166,29 +141,27 @@ const getRecommendationDetails = async (req, res, next) => {
  */
 const bookmarkRecommendation = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     const { id } = req.params;
 
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Bookmarking recommendation", { userEmail, id });
 
     const result = await aiService.toggleBookmark(id, userEmail);
 
-    return ApiResponse.success(
-      res,
-      result.isBookmarked
-        ? "Recommendation bookmarked successfully."
-        : "Recommendation unbookmarked successfully.",
-      result,
-      200,
+    return res.status(200).json(
+      ApiResponse.success(
+        result.isBookmarked
+          ? "Recommendation bookmarked successfully."
+          : "Recommendation unbookmarked successfully.",
+        result
+      )
     );
   } catch (error) {
-    logger.error("Error in bookmarkRecommendation controller", {
-      error: error.message,
-    });
+    logger.error("Error in bookmarkRecommendation controller", { error: error.message });
     next(error);
   }
 };
@@ -199,20 +172,17 @@ const bookmarkRecommendation = async (req, res, next) => {
  */
 const clearHistory = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Clearing all recommendation history", { userEmail });
 
     const result = await aiService.clearHistory(userEmail);
 
-    return ApiResponse.success(
-      res,
-      "All recommendation history cleared successfully.",
-      result,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("All recommendation history cleared successfully.", result)
     );
   } catch (error) {
     logger.error("Error in clearHistory controller", { error: error.message });
@@ -226,27 +196,22 @@ const clearHistory = async (req, res, next) => {
  */
 const deleteRecommendation = async (req, res, next) => {
   try {
-    const userEmail = req.user.email;
+    const userEmail = req.user?.email;
     const { id } = req.params;
 
     if (!userEmail) {
-      return ApiResponse.error(res, "User authentication required.", 401);
+      return res.status(401).json(ApiResponse.unauthorized("User authentication required."));
     }
 
     logger.info("Deleting recommendation log", { userEmail, id });
 
     const result = await aiService.deleteRecommendation(id, userEmail);
 
-    return ApiResponse.success(
-      res,
-      "Recommendation log deleted successfully.",
-      result,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Recommendation log deleted successfully.", result)
     );
   } catch (error) {
-    logger.error("Error in deleteRecommendation controller", {
-      error: error.message,
-    });
+    logger.error("Error in deleteRecommendation controller", { error: error.message });
     next(error);
   }
 };
@@ -258,16 +223,11 @@ const deleteRecommendation = async (req, res, next) => {
 const getBookingProviders = async (req, res, next) => {
   try {
     const providers = bookingService.getProviders();
-    return ApiResponse.success(
-      res,
-      "Booking providers retrieved successfully.",
-      providers,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Booking providers retrieved successfully.", providers)
     );
   } catch (error) {
-    logger.error("Error in getBookingProviders controller", {
-      error: error.message,
-    });
+    logger.error("Error in getBookingProviders controller", { error: error.message });
     next(error);
   }
 };
@@ -280,16 +240,11 @@ const prepareBooking = async (req, res, next) => {
   try {
     logger.info("Preparing booking redirect URL", { body: req.body });
     const result = bookingService.prepareBooking(req.body);
-    return ApiResponse.success(
-      res,
-      "Booking details prepared successfully.",
-      result,
-      200,
+    return res.status(200).json(
+      ApiResponse.success("Booking details prepared successfully.", result)
     );
   } catch (error) {
-    logger.error("Error in prepareBooking controller", {
-      error: error.message,
-    });
+    logger.error("Error in prepareBooking controller", { error: error.message });
     next(error);
   }
 };

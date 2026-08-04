@@ -3,7 +3,7 @@
 const { db } = require("../../config/firebase");
 const { getGeminiClient } = require("../../config/gemini");
 
-const MODEL = "gemini-flash-lite-latest";
+const MODEL = "gemini-1.5-flash";
 const COLLECTION = "aiRecommendations";
 
 /**
@@ -20,7 +20,16 @@ const askGemini = async (prompt, systemInstruction) => {
     systemInstruction: systemInstruction,
   });
 
-  const result = await model.generateContent(prompt);
+  const TIMEOUT_MS = 30000; // 30-second timeout
+
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(
+      () => reject(new Error("Gemini AI request timed out after 30 seconds. Please try again.")),
+      TIMEOUT_MS
+    )
+  );
+
+  const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
   return result.response.text();
 };
 
@@ -53,18 +62,33 @@ const saveRecommendation = async (recommendationData) => {
  * @param {string} userEmail - User's email
  * @returns {Promise<Array>} - List of recommendation history logs
  */
+const getMillis = (val) => {
+  if (!val) return 0;
+  if (typeof val.toDate === "function") return val.toDate().getTime();
+  if (val.seconds !== undefined) return val.seconds * 1000;
+  if (val._seconds !== undefined) return val._seconds * 1000;
+  return new Date(val).getTime();
+};
+
+/**
+ * Retrieves the recommendation history for a specific user email.
+ * @param {string} userEmail - User's email
+ * @returns {Promise<Array>} - List of recommendation history logs
+ */
 const getHistory = async (userEmail) => {
   const snapshot = await db
     .collection(COLLECTION)
     .where("userEmail", "==", userEmail)
-    .orderBy("createdAt", "desc")
     .get();
 
-  return snapshot.docs.map((doc) => ({
+  const docs = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate() || doc.data().createdAt,
   }));
+
+  docs.sort((a, b) => getMillis(b.createdAt) - getMillis(a.createdAt));
+  return docs;
 };
 
 /**
@@ -74,18 +98,8 @@ const getHistory = async (userEmail) => {
  * @returns {Promise<Array>} - List of recent recommendation logs
  */
 const getRecent = async (userEmail, limit = 5) => {
-  const snapshot = await db
-    .collection(COLLECTION)
-    .where("userEmail", "==", userEmail)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
-    .get();
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate() || doc.data().createdAt,
-  }));
+  const history = await getHistory(userEmail);
+  return history.slice(0, limit);
 };
 
 /**
