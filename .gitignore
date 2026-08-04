@@ -7,3 +7,4 @@ backend/config/firebase-service-account.json
 backend/.env
 backend/config/firebase-service-account.json
 backend/config/serviceAccountKey.json
+backend/config/serviceAccountKey.json
