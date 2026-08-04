@@ -21,7 +21,9 @@ const validateCreateJourney = (data) => {
     (data.from && data.to);
 
   if (!hasIdentifier) {
-    errors.push("Please provide a Train Number, PNR, Train Name, or Source and Destination stations.");
+    errors.push(
+      "Please provide a Train Number, PNR, Train Name, or Source and Destination stations.",
+    );
   }
 
   return {

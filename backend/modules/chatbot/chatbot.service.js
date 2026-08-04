@@ -29,7 +29,10 @@ Only return the title.
     const result = await model.generateContent(prompt);
     return result.response.text().trim() || "New Chat";
   } catch (error) {
-    console.error("Failed to generate chat title, falling back to default:", error);
+    console.error(
+      "Failed to generate chat title, falling back to default:",
+      error,
+    );
     return "New Chat";
   }
 };
@@ -64,7 +67,7 @@ const sendMessage = async ({ userId, sessionId, message }) => {
     if (role === expectedRole) {
       filtered.push({
         role,
-        parts: [{ text: msg.content || "" }]
+        parts: [{ text: msg.content || "" }],
       });
       expectedRole = expectedRole === "user" ? "model" : "user";
     }

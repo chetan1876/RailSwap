@@ -21,8 +21,14 @@ router.post("/ai-assistant", journeyController.askAIAssistant);
 
 // Checklist Management
 router.post("/checklist/:journeyId", journeyController.addChecklistItem);
-router.patch("/checklist/:journeyId/:itemId/toggle", journeyController.toggleChecklistItem);
-router.delete("/checklist/:journeyId/:itemId", journeyController.deleteChecklistItem);
+router.patch(
+  "/checklist/:journeyId/:itemId/toggle",
+  journeyController.toggleChecklistItem,
+);
+router.delete(
+  "/checklist/:journeyId/:itemId",
+  journeyController.deleteChecklistItem,
+);
 
 // Notes Management
 router.post("/notes/:journeyId", journeyController.addJourneyNote);

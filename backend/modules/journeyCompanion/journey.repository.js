@@ -130,7 +130,9 @@ const getJourneysByUser = async (userId = "default_user") => {
 
   ensureSeedData();
   const list = Array.from(inMemoryStore.values());
-  return list.filter((j) => !userId || j.userId === userId || userId === "default_user");
+  return list.filter(
+    (j) => !userId || j.userId === userId || userId === "default_user",
+  );
 };
 
 /*
@@ -172,10 +174,13 @@ UPDATE JOURNEY
 const updateJourney = async (journeyId, updateData) => {
   try {
     if (db) {
-      await db.collection(COLLECTION).doc(journeyId).update({
-        ...updateData,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await db
+        .collection(COLLECTION)
+        .doc(journeyId)
+        .update({
+          ...updateData,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
       return getJourneyById(journeyId);
     }
   } catch (error) {

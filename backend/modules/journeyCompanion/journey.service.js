@@ -1,8 +1,16 @@
 const journeyRepository = require("./journey.repository");
 const { getGeminiClient } = require("../../config/gemini");
-const { searchPresetTrains, generateMockPNRDetails, calculateJourneyProgress } = require("./journey.utils");
+const {
+  searchPresetTrains,
+  generateMockPNRDetails,
+  calculateJourneyProgress,
+} = require("./journey.utils");
 const { buildJourneyTimeline } = require("./journey.timeline");
-const { getDefaultChecklist, createChecklistItem, getChecklistStats } = require("./journey.checklist");
+const {
+  getDefaultChecklist,
+  createChecklistItem,
+  getChecklistStats,
+} = require("./journey.checklist");
 const { createNote, processNotesList } = require("./journey.notes");
 const { generateJourneyReminders } = require("./journey.notifications");
 const { computeUserAnalytics } = require("./journey.analytics");
@@ -27,7 +35,9 @@ const createJourney = async (journeyData) => {
 
   // If train number was provided and matches preset, enrich details
   if (journeyData.trainNumber && (!journeyData.from || !journeyData.to)) {
-    const preset = PRESET_TRAINS.find((t) => t.trainNumber === String(journeyData.trainNumber).trim());
+    const preset = PRESET_TRAINS.find(
+      (t) => t.trainNumber === String(journeyData.trainNumber).trim(),
+    );
     if (preset) {
       initialData = {
         trainName: preset.trainName,
@@ -136,7 +146,8 @@ const answerAIAssistantQuestion = async (journeyId, question) => {
   }
 
   if (!journey) {
-    const defaultJourneys = await journeyRepository.getJourneysByUser("default_user");
+    const defaultJourneys =
+      await journeyRepository.getJourneysByUser("default_user");
     journey = defaultJourneys[0] || generateMockPNRDetails("2849104829");
   }
 
@@ -171,7 +182,10 @@ Answer concisely, accurately, and reassuringly in 2-4 sentences with helpful det
       if (aiResponse) return aiResponse;
     }
   } catch (error) {
-    console.warn("Gemini API call failed, using offline fallback engine:", error.message);
+    console.warn(
+      "Gemini API call failed, using offline fallback engine:",
+      error.message,
+    );
   }
 
   // Smart Fallback QA Engine
@@ -192,7 +206,11 @@ Answer concisely, accurately, and reassuringly in 2-4 sentences with helpful det
     return `We recommend setting a wake-up alarm for 30 minutes before reaching ${journey.to} (around ${journey.arrivalTime || "07:30 AM"}). You can enable the Wake-Up Reminder in the Reminders tab!`;
   }
 
-  if (q.includes("get down") || q.includes("reach") || q.includes("destination")) {
+  if (
+    q.includes("get down") ||
+    q.includes("reach") ||
+    q.includes("destination")
+  ) {
     return `Your destination is ${journey.to}. Scheduled arrival time is ${journey.arrivalTime || "08:32 AM"}. Stay prepared with your luggage near coach ${journey.coach || "B2"}.`;
   }
 
@@ -204,7 +222,11 @@ Answer concisely, accurately, and reassuringly in 2-4 sentences with helpful det
     return `The stop duration at ${currentStation} is ${timeline.currentStation.stopDuration || "5-10 minutes"}. Make sure not to wander far from your coach ${journey.coach || "B2"}.`;
   }
 
-  if (q.includes("what should i do") || q.includes("tip") || q.includes("advice")) {
+  if (
+    q.includes("what should i do") ||
+    q.includes("tip") ||
+    q.includes("advice")
+  ) {
     return `Check your Travel Checklist to make sure your wallet, phone, and ID card are secure. Keep your water bottle handy and stay updated with live timeline milestones!`;
   }
 
@@ -245,7 +267,10 @@ Generate:
       return result.response.text();
     }
   } catch (error) {
-    console.warn("Gemini tips failed, returning default insights:", error.message);
+    console.warn(
+      "Gemini tips failed, returning default insights:",
+      error.message,
+    );
   }
 
   return `
@@ -280,7 +305,7 @@ const toggleChecklistItem = async (journeyId, itemId) => {
   if (!journey) throw new Error("Journey not found");
 
   const checklist = (journey.checklist || []).map((item) =>
-    item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
+    item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item,
   );
 
   await journeyRepository.updateJourney(journeyId, { checklist });
@@ -291,7 +316,9 @@ const deleteChecklistItem = async (journeyId, itemId) => {
   const journey = await journeyRepository.getJourneyById(journeyId);
   if (!journey) throw new Error("Journey not found");
 
-  const checklist = (journey.checklist || []).filter((item) => item.id !== itemId);
+  const checklist = (journey.checklist || []).filter(
+    (item) => item.id !== itemId,
+  );
   await journeyRepository.updateJourney(journeyId, { checklist });
   return checklist;
 };
@@ -318,7 +345,9 @@ const togglePinNote = async (journeyId, noteId) => {
   if (!journey) throw new Error("Journey not found");
 
   const notes = processNotesList(
-    (journey.notes || []).map((n) => (n.id === noteId ? { ...n, isPinned: !n.isPinned } : n))
+    (journey.notes || []).map((n) =>
+      n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
+    ),
   );
 
   await journeyRepository.updateJourney(journeyId, { notes });
@@ -345,7 +374,10 @@ const getUserAnalytics = async (userId) => {
   return computeUserAnalytics(journeys);
 };
 
-const saveJourneyMemory = async (journeyId, { rating, notes, summary, isFavourite }) => {
+const saveJourneyMemory = async (
+  journeyId,
+  { rating, notes, summary, isFavourite },
+) => {
   const updateData = {
     status: JOURNEY_STATUS.COMPLETED,
     progress: 100,

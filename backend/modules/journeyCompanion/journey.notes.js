@@ -7,7 +7,12 @@ JOURNEY NOTES ENGINE
 /**
  * Create a structured journey note object
  */
-const createNote = ({ title, content, category = "General", isPinned = false }) => {
+const createNote = ({
+  title,
+  content,
+  category = "General",
+  isPinned = false,
+}) => {
   return {
     id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     title: title ? title.trim() : "Journey Note",

@@ -92,7 +92,10 @@ UPDATE JOURNEY
 const updateJourney = async (req, res) => {
   try {
     const { journeyId } = req.params;
-    const updatedJourney = await journeyService.updateJourney(journeyId, req.body);
+    const updatedJourney = await journeyService.updateJourney(
+      journeyId,
+      req.body,
+    );
 
     res.status(200).json({
       success: true,
@@ -170,7 +173,10 @@ const askAIAssistant = async (req, res) => {
     }
 
     const { journeyId, question } = req.body;
-    const answer = await journeyService.answerAIAssistantQuestion(journeyId, question);
+    const answer = await journeyService.answerAIAssistantQuestion(
+      journeyId,
+      question,
+    );
 
     res.status(200).json({
       success: true,
@@ -225,7 +231,10 @@ const addChecklistItem = async (req, res) => {
       });
     }
 
-    const checklist = await journeyService.addChecklistItem(journeyId, req.body);
+    const checklist = await journeyService.addChecklistItem(
+      journeyId,
+      req.body,
+    );
 
     res.status(200).json({
       success: true,
@@ -243,7 +252,10 @@ const addChecklistItem = async (req, res) => {
 const toggleChecklistItem = async (req, res) => {
   try {
     const { journeyId, itemId } = req.params;
-    const checklist = await journeyService.toggleChecklistItem(journeyId, itemId);
+    const checklist = await journeyService.toggleChecklistItem(
+      journeyId,
+      itemId,
+    );
 
     res.status(200).json({
       success: true,
@@ -260,7 +272,10 @@ const toggleChecklistItem = async (req, res) => {
 const deleteChecklistItem = async (req, res) => {
   try {
     const { journeyId, itemId } = req.params;
-    const checklist = await journeyService.deleteChecklistItem(journeyId, itemId);
+    const checklist = await journeyService.deleteChecklistItem(
+      journeyId,
+      itemId,
+    );
 
     res.status(200).json({
       success: true,
@@ -350,7 +365,9 @@ ANALYTICS & MEMORIES HANDLERS
 const getUserAnalytics = async (req, res) => {
   try {
     const { userId } = req.params;
-    const analytics = await journeyService.getUserAnalytics(userId || "default_user");
+    const analytics = await journeyService.getUserAnalytics(
+      userId || "default_user",
+    );
 
     res.status(200).json({
       success: true,

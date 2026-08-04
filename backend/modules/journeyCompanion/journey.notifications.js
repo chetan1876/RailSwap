@@ -48,7 +48,8 @@ const generateJourneyReminders = (journey, userSettings = {}) => {
       title: "Luggage Check Reminder",
       type: "LUGGAGE",
       minutesBefore: userSettings.luggageMinutes || 20,
-      description: "Count your luggage, phone, charger, and wallet under the seat before leaving.",
+      description:
+        "Count your luggage, phone, charger, and wallet under the seat before leaving.",
       icon: "fa-suitcase-rolling",
       isEnabled: userSettings.luggageReminder !== false,
       isTriggered: progress >= 80,
@@ -58,7 +59,8 @@ const generateJourneyReminders = (journey, userSettings = {}) => {
       title: "Night Wake-Up Alarm",
       type: "WAKEUP",
       minutesBefore: userSettings.wakeupMinutes || 35,
-      description: "Smart wake-up alarm set 35 mins prior to destination arrival.",
+      description:
+        "Smart wake-up alarm set 35 mins prior to destination arrival.",
       icon: "fa-clock",
       isEnabled: userSettings.wakeupReminder !== false,
       isTriggered: progress >= 75 && progress < 95,

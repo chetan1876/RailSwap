@@ -178,7 +178,7 @@ SEARCH CHAT
 const searchChats = async (userId, keyword) => {
   const sessions = await getSessions(userId);
   return sessions.filter((session) =>
-    (session.title || "").toLowerCase().includes((keyword || "").toLowerCase())
+    (session.title || "").toLowerCase().includes((keyword || "").toLowerCase()),
   );
 };
 
