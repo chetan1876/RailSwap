@@ -275,6 +275,7 @@ function AiRecommendation() {
   const [filterBookmark, setFilterBookmark] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [isFallbackNotice, setIsFallbackNotice] = useState(false);
 
   // Booking Modal & Partner States
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -356,22 +357,37 @@ function AiRecommendation() {
         await aiRecommendationAPI.generateRecommendation(formData);
       if (response.success) {
         setCurrentResult(response.data);
-        setSuccessMsg("AI Recommendations generated successfully!");
+        // If backend used fallback recommendations, show a friendly info notice (not a scary error)
+        if (response.data?.isFallback) {
+          setIsFallbackNotice(true);
+          setErrorMsg(
+            response.data.fallbackReason ||
+              "AI service is temporarily unavailable. Showing smart recommendations based on available railway data."
+          );
+        } else {
+          setIsFallbackNotice(false);
+          setSuccessMsg("AI Recommendations generated successfully!");
+        }
         fetchHistory(); // Refresh history log list
       } else {
-        setErrorMsg(response.message || "Failed to generate recommendations.");
+        // Backend returned non-success but we still have no data — show friendly notice
+        setIsFallbackNotice(true);
+        setErrorMsg(
+          "AI service is temporarily unavailable. Showing smart recommendations based on available railway data."
+        );
       }
     } catch (err) {
       console.error("[AiRecommendation] generateRecommendation error:", err);
+      // Never show raw Gemini/API errors to the user
+      setIsFallbackNotice(true);
       setErrorMsg(
-        err.message ||
-          err.response?.data?.message ||
-          "An error occurred while calling the AI recommendation engine."
+        "AI service is temporarily unavailable. Showing smart recommendations based on available railway data."
       );
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleBookmark = async (id) => {
     try {
@@ -621,8 +637,8 @@ function AiRecommendation() {
 
       {/* Alert Notices */}
       {errorMsg && (
-        <div className="alert-message error-alert">
-          <i className="fa-solid fa-triangle-exclamation"></i> {errorMsg}
+        <div className={`alert-message ${isFallbackNotice ? "fallback-alert" : "error-alert"}`}>
+          <i className={`fa-solid ${isFallbackNotice ? "fa-robot" : "fa-triangle-exclamation"}`}></i> {errorMsg}
         </div>
       )}
       {successMsg && (
