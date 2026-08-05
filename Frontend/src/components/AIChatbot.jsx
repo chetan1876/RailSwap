@@ -111,11 +111,15 @@ const AIChatbot = () => {
       await loadHistory();
     } catch (err) {
       console.error("Error sending message:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "An unexpected error occurred. Please try again.";
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "❌ Failed to connect Gemini AI.",
+          text: `❌ ${errorMessage}`,
         },
       ]);
     } finally {

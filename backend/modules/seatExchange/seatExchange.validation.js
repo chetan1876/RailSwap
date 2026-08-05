@@ -1,8 +1,10 @@
 const Joi = require("joi");
 
-// Create Seat Exchange Request
+// Create Seat Exchange Request Validation
 const createSeatExchangeValidation = Joi.object({
-  passengerName: Joi.string().trim().min(3).max(50).required(),
+  user: Joi.string().optional().default("user123"),
+
+  passengerName: Joi.string().trim().min(2).max(50).required(),
 
   age: Joi.number().integer().min(1).max(120).required(),
 
@@ -20,7 +22,7 @@ const createSeatExchangeValidation = Joi.object({
   trainName: Joi.string()
     .required(),
 
-  journeyDate: Joi.date()
+  journeyDate: Joi.string()
     .required(),
 
   boardingStation: Joi.string()
@@ -32,61 +34,51 @@ const createSeatExchangeValidation = Joi.object({
   coach: Joi.string()
     .required(),
 
-  seatNumber: Joi.string()
-    .required(),
+  seatNumber: Joi.number().integer().min(1).max(120).required(),
 
-  seatType: Joi.string()
-    .valid(
-      "Lower Berth",
-      "Middle Berth",
-      "Upper Berth",
-      "Side Lower",
-      "Side Upper",
-      "Window Seat"
-    )
-    .required(),
+  seatType: Joi.string().required(),
 
-  preferredSeat: Joi.string()
-    .valid(
-      "Lower Berth",
-      "Middle Berth",
-      "Upper Berth",
-      "Side Lower",
-      "Side Upper",
-      "Window Seat",
-      "Any"
-    )
-    .required(),
+  bookingStatus: Joi.string().optional().default("CNF"),
+
+  preferredCoach: Joi.string().required(),
+  preferredSeatNumber: Joi.number().integer().min(1).max(120).required(),
+  preferredSeat: Joi.string().optional().default("Any"),
+
+  sameCoachPreferred: Joi.boolean().optional().default(false),
+  sameCabinPreferred: Joi.boolean().optional().default(false),
+  medicalPriority: Joi.boolean().optional().default(false),
+  seniorCitizenPriority: Joi.boolean().optional().default(false),
+  familyPriority: Joi.boolean().optional().default(false),
+
+  pnrVerified: Joi.boolean().optional().default(true),
 });
 
-// Update Seat Preference
-const updateSeatPreferenceValidation = Joi.object({
-  preferredSeat: Joi.string()
-    .valid(
-      "Lower Berth",
-      "Middle Berth",
-      "Upper Berth",
-      "Side Lower",
-      "Side Upper",
-      "Window Seat",
-      "Any"
-    )
-    .required(),
+// Paytm Post-Acceptance Payment Validation
+const postAcceptancePaymentValidation = Joi.object({
+  requestId: Joi.string().required(),
+  amount: Joi.number().valid(50).required(),
+  paymentMethod: Joi.string().valid("PAYTM", "UPI", "CARD", "NET_BANKING").default("PAYTM"),
 });
 
-// Accept / Reject Request
+// Update Status Validation
 const updateStatusValidation = Joi.object({
   status: Joi.string()
     .valid(
+      "PENDING",
       "ACCEPTED",
+      "PAYMENT_PENDING",
+      "PAYMENT_SUCCESSFUL",
+      "COMPLETED",
       "REJECTED",
       "CANCELLED"
     )
     .required(),
+  matchedUserId: Joi.string().optional(),
 });
 
 module.exports = {
   createSeatExchangeValidation,
-  updateSeatPreferenceValidation,
+  postAcceptancePaymentValidation,
   updateStatusValidation,
 };
+

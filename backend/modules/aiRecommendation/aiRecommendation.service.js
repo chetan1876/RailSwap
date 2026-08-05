@@ -192,7 +192,10 @@ Based on these details, generate the recommendations following the system instru
       throw ApiError.internal("Gemini API quota exceeded. Please wait or upgrade your plan.");
     }
     if (msg.includes("models/") && (msg.includes("not found") || msg.includes("404"))) {
-      throw ApiError.internal("Gemini model 'gemini-1.5-flash' not found. Verify the model name or update GEMINI_API_KEY.");
+      throw ApiError.internal(`Gemini model not found. The configured model may be unsupported. Please check your GEMINI_API_KEY and ensure the model is available in your region.`);
+    }
+    if (msg.includes("not found") && msg.includes("404")) {
+      throw ApiError.internal(`Gemini API returned 404. The model may be unavailable or your API key may not have access. Check your GEMINI_API_KEY.`);
     }
     if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND") || msg.includes("ETIMEDOUT") || msg.includes("network")) {
       throw ApiError.internal("Network error: Unable to reach the Gemini AI service. Check your internet connection.");

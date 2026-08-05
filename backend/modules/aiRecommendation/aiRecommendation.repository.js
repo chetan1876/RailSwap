@@ -3,7 +3,7 @@
 const { db } = require("../../config/firebase");
 const { getGeminiClient } = require("../../config/gemini");
 
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.0-flash";
 const COLLECTION = "aiRecommendations";
 
 /**
