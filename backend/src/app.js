@@ -18,6 +18,7 @@ const chatbotRoutes = require("../modules/chatbot/chatbot.routes");
 const aiRecommendationRoutes = require("../modules/aiRecommendation/aiRecommendation.routes");
 const journeyRoutes = require("../modules/journeyCompanion/journey.routes");
 const crowdPredictionRoutes = require("../modules/crowdPrediction/crowdPrediction.routes");
+const lostItemRoutes = require("../modules/lostItem/lostItem.routes");
 
 const app = express();
 
@@ -92,6 +93,8 @@ app.use("/api/ai-recommendation", aiRecommendationRoutes);
 app.use("/api/journey", journeyRoutes);
 
 app.use("/api/crowd-prediction", crowdPredictionRoutes);
+
+app.use("/api/lost-items", lostItemRoutes);
 
 
 
