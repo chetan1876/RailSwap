@@ -276,6 +276,40 @@ const LandingPage = () => {
 
        
 
+        
+
+      {/* ================= HOW IT WORKS ================= */}
+
+      <section className="how-it-works">
+
+        <h2>How It Works</h2>
+
+        <div className="steps">
+
+          <div className="step">
+            <span>1</span>
+            Verify Journey
+          </div>
+
+          <div className="step">
+            <span>2</span>
+            Find Match
+          </div>
+
+          <div className="step">
+            <span>3</span>
+            Confirm Exchange
+          </div>
+
+          <div className="step">
+            <span>4</span>
+            Travel Comfortably
+          </div>
+
+        </div>
+
+      </section>
+
       {/* ================= STATS ================= */}
 
       <section className="stats">

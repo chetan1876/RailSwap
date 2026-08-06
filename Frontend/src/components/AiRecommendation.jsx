@@ -628,11 +628,7 @@ function AiRecommendation() {
           <i className="fa-solid fa-robot header-ai-icon"></i> AI Recommendation
           Engine
         </h1>
-        <p>
-          Next-generation personalized train booking intelligence. Calculate
-          comfort scores, analyze seat selections, forecast coach crowding
-          levels, and check travel delay risks instantly.
-        </p>
+  
       </div>
 
       {/* Alert Notices */}
@@ -679,7 +675,7 @@ function AiRecommendation() {
                 <div className="input-group">
                   <label htmlFor="source">Source Station *</label>
                   <div className="input-icon-wrap">
-                    <i className="fa-solid fa-location-crosshairs input-icon"></i>
+                    
                     <input
                       type="text"
                       id="source"
@@ -695,7 +691,7 @@ function AiRecommendation() {
                 <div className="input-group">
                   <label htmlFor="destination">Destination Station *</label>
                   <div className="input-icon-wrap">
-                    <i className="fa-solid fa-location-dot input-icon"></i>
+                    
                     <input
                       type="text"
                       id="destination"
