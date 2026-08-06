@@ -54,8 +54,13 @@ const BOOKING_PROVIDERS = [
     badgeColor: "#1a56db",
     brandColor: "#0f4c81",
     logoType: "irctc",
-    description: "Direct booking with official IRCTC credentials. Zero markup fee.",
-    features: ["Official IRCTC Booking", "Direct Cancellation", "Loyalty Rewards"],
+    description:
+      "Direct booking with official IRCTC credentials. Zero markup fee.",
+    features: [
+      "Official IRCTC Booking",
+      "Direct Cancellation",
+      "Loyalty Rewards",
+    ],
     supportedClasses: ["1A", "2A", "3A", "3E", "CC", "SL", "2S", "EC"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);
@@ -75,7 +80,11 @@ const BOOKING_PROVIDERS = [
     brandColor: "#002970",
     logoType: "paytm",
     description: "Fastest checkout with Paytm UPI, Wallet, or Credit Cards.",
-    features: ["Zero Gateway Fee", "Instant Refund to Wallet", "Live Status Tracking"],
+    features: [
+      "Zero Gateway Fee",
+      "Instant Refund to Wallet",
+      "Live Status Tracking",
+    ],
     supportedClasses: ["1A", "2A", "3A", "CC", "SL", "2S"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);
@@ -92,8 +101,13 @@ const BOOKING_PROVIDERS = [
     badgeColor: "#22c55e",
     brandColor: "#15803d",
     logoType: "confirmtkt",
-    description: "Get highest ticket confirmation chances and alternate berth recommendations.",
-    features: ["99% WL Prediction", "Same Train Alternate Berth", "Free Cancellation Pass"],
+    description:
+      "Get highest ticket confirmation chances and alternate berth recommendations.",
+    features: [
+      "99% WL Prediction",
+      "Same Train Alternate Berth",
+      "Free Cancellation Pass",
+    ],
     supportedClasses: ["1A", "2A", "3A", "CC", "SL"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);
@@ -111,8 +125,13 @@ const BOOKING_PROVIDERS = [
     badgeColor: "#f59e0b",
     brandColor: "#d97706",
     logoType: "railyatri",
-    description: "Book tickets along with meal delivery and coach position prediction.",
-    features: ["Coach Position Map", "E-Catering Delivery", "24x7 Customer Help"],
+    description:
+      "Book tickets along with meal delivery and coach position prediction.",
+    features: [
+      "Coach Position Map",
+      "E-Catering Delivery",
+      "24x7 Customer Help",
+    ],
     supportedClasses: ["1A", "2A", "3A", "CC", "SL"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);
@@ -129,8 +148,13 @@ const BOOKING_PROVIDERS = [
     badgeColor: "#ec4899",
     brandColor: "#be185d",
     logoType: "ixigo",
-    description: "Instant booking confirmation with full refund on cancellation.",
-    features: ["Assured Instant Refund", "Zero Gateway Charge", "PNR Status Alerts"],
+    description:
+      "Instant booking confirmation with full refund on cancellation.",
+    features: [
+      "Assured Instant Refund",
+      "Zero Gateway Charge",
+      "PNR Status Alerts",
+    ],
     supportedClasses: ["1A", "2A", "3A", "CC", "SL", "2S"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);
@@ -147,8 +171,13 @@ const BOOKING_PROVIDERS = [
     badgeColor: "#ff9900",
     brandColor: "#232f3e",
     logoType: "amazonpay",
-    description: "Seamless train booking with Amazon Pay balance and prime rewards.",
-    features: ["Amazon Pay Balance", "Exclusive Cashbacks", "Prime Member Perks"],
+    description:
+      "Seamless train booking with Amazon Pay balance and prime rewards.",
+    features: [
+      "Amazon Pay Balance",
+      "Exclusive Cashbacks",
+      "Prime Member Perks",
+    ],
     supportedClasses: ["1A", "2A", "3A", "CC", "SL"],
     generateUrl: (params) => {
       const src = extractStationCode(params.source);

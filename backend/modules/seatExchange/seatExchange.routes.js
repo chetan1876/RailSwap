@@ -9,10 +9,28 @@ router.post(
   seatExchangeController.createSeatExchangeRequest
 );
 
+// Process Paytm Payment Post-Acceptance (₹50 Fee)
+router.post(
+  "/pay-post-acceptance",
+  seatExchangeController.processPaytmPayment
+);
+
+router.post(
+  "/pay",
+  seatExchangeController.processPaytmPayment
+);
+
+
 // Get All Seat Exchange Requests
 router.get(
   "/requests",
   seatExchangeController.getAllSeatExchangeRequests
+);
+
+// Get Payment History
+router.get(
+  "/payments",
+  seatExchangeController.getPaymentHistory
 );
 
 // Get Seat Exchange Request By ID
@@ -21,7 +39,7 @@ router.get(
   seatExchangeController.getSeatExchangeRequestById
 );
 
-// Find Matching Passengers
+// Find Matching Passengers (AI Scoring)
 router.post(
   "/find-matches",
   seatExchangeController.findMatchingPassengers
@@ -45,4 +63,4 @@ router.patch(
   seatExchangeController.cancelSeatExchange
 );
 
-module.exports = router;
+module.exports = router;

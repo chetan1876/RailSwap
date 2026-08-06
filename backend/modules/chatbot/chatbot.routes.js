@@ -14,7 +14,6 @@ CHAT
 */
 router.post("/chat", validateChat, controller.sendMessage);
 
-
 /*
 ========================================
 NEW CHAT

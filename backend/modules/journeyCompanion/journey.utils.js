@@ -25,8 +25,12 @@ const calculateJourneyProgress = (journey) => {
   // Calculate based on departure & arrival times if present
   try {
     const now = new Date();
-    const [depHours, depMins] = (journey.departureTime || "08:00").split(":").map(Number);
-    const [arrHours, arrMins] = (journey.arrivalTime || "20:00").split(":").map(Number);
+    const [depHours, depMins] = (journey.departureTime || "08:00")
+      .split(":")
+      .map(Number);
+    const [arrHours, arrMins] = (journey.arrivalTime || "20:00")
+      .split(":")
+      .map(Number);
 
     const depDate = new Date(journey.journeyDate || now);
     depDate.setHours(depHours || 8, depMins || 0, 0, 0);
@@ -43,7 +47,10 @@ const calculateJourneyProgress = (journey) => {
     const totalDuration = arrDate.getTime() - depDate.getTime();
     const elapsed = now.getTime() - depDate.getTime();
 
-    return Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
+    return Math.min(
+      100,
+      Math.max(0, Math.round((elapsed / totalDuration) * 100)),
+    );
   } catch (error) {
     return 45; // Default safe progress for active journeys
   }
@@ -62,7 +69,7 @@ const searchPresetTrains = (query) => {
       t.trainNumber.toLowerCase().includes(q) ||
       t.trainName.toLowerCase().includes(q) ||
       t.from.toLowerCase().includes(q) ||
-      t.to.toLowerCase().includes(q)
+      t.to.toLowerCase().includes(q),
   );
 };
 
@@ -71,7 +78,12 @@ const searchPresetTrains = (query) => {
  */
 const generateMockPNRDetails = (pnrNumber) => {
   const cleanPNR = String(pnrNumber).trim();
-  const train = PRESET_TRAINS[Math.abs(cleanPNR.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)) % PRESET_TRAINS.length];
+  const train =
+    PRESET_TRAINS[
+      Math.abs(
+        cleanPNR.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0),
+      ) % PRESET_TRAINS.length
+    ];
 
   const today = new Date().toISOString().split("T")[0];
 

@@ -37,7 +37,9 @@ const computeUserAnalytics = (journeys = []) => {
     totalDistanceKm += dist;
 
     // Train count
-    const trainKey = j.trainName ? `${j.trainName} (${j.trainNumber || ""})` : "Express Train";
+    const trainKey = j.trainName
+      ? `${j.trainName} (${j.trainNumber || ""})`
+      : "Express Train";
     trainCounts[trainKey] = (trainCounts[trainKey] || 0) + 1;
 
     // Route count
@@ -68,22 +70,42 @@ const computeUserAnalytics = (journeys = []) => {
   });
 
   // Average duration
-  const averageDurationHours = Math.round((totalDistanceKm / (totalTrips * 65)) * 10) / 10 || 8.5;
+  const averageDurationHours =
+    Math.round((totalDistanceKm / (totalTrips * 65)) * 10) / 10 || 8.5;
 
   // Monthly distribution mock/aggregation
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const currentMonthIdx = new Date().getMonth();
-  const monthlyTrips = months.slice(Math.max(0, currentMonthIdx - 5), currentMonthIdx + 1).map((m, idx) => ({
-    month: m,
-    trips: Math.max(1, (idx + 1) % 4 + Math.floor(totalTrips / 3)),
-  }));
+  const monthlyTrips = months
+    .slice(Math.max(0, currentMonthIdx - 5), currentMonthIdx + 1)
+    .map((m, idx) => ({
+      month: m,
+      trips: Math.max(1, ((idx + 1) % 4) + Math.floor(totalTrips / 3)),
+    }));
 
   return {
     totalTrips,
     totalDistanceKm,
     averageDurationHours,
-    favouriteRoute: favouriteRoute !== "None" ? favouriteRoute : "Mumbai Central → New Delhi",
-    favouriteTrain: favouriteTrain !== "None" ? favouriteTrain : "Mumbai Rajdhani Express (12951)",
+    favouriteRoute:
+      favouriteRoute !== "None" ? favouriteRoute : "Mumbai Central → New Delhi",
+    favouriteTrain:
+      favouriteTrain !== "None"
+        ? favouriteTrain
+        : "Mumbai Rajdhani Express (12951)",
     monthlyTrips,
   };
 };

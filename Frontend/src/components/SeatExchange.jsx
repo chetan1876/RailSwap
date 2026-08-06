@@ -1,990 +1,934 @@
 import { useEffect, useState } from "react";
 import SeatExchangeForm from "./SeatExchangeForm";
-import axios from "axios";
+import {
+  createSeatExchangeRequest,
+  processPaytmPostAcceptancePayment,
+  getAllSeatExchangeRequests,
+  findMatchingPassengers,
+  acceptSeatExchange,
+  rejectSeatExchange,
+  cancelSeatExchange,
+  getPaymentHistory,
+} from "../services/seatExchange.service";
 
 import {
   requestNotificationPermission,
   listenForMessages,
 } from "../firebase";
 
-import "../styles/SeatExchange.css";
+import "../styles/seatExchange.css";
 
 const SeatExchange = () => {
   // =====================================================
   // STATE
   // =====================================================
-
+  const [activeTab, setActiveTab] = useState("requester"); // 'requester' | 'receiver' | 'matches' | 'history' | 'payments'
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [requests, setRequests] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [paymentHistory, setPaymentHistory] = useState([]);
 
   const [latestRequest, setLatestRequest] = useState(null);
   const [matchLoading, setMatchLoading] = useState(false);
 
-  // =====================================================
-  // FIREBASE NOTIFICATION SETUP
-  // =====================================================
+  // Paytm Post-Acceptance Payment Modal State
+  const [showPaytmModal, setShowPaytmModal] = useState(false);
+  const [unlockedPaymentRequest, setUnlockedPaymentRequest] = useState(null);
+  const [processingPaytm, setProcessingPaytm] = useState(false);
 
+  // Receipt Modal State
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+
+  // Filter State
+  const [coachFilter, setCoachFilter] = useState("ALL");
+  const [berthFilter, setBerthFilter] = useState("ALL");
+
+  // =====================================================
+  // FIREBASE NOTIFICATIONS
+  // =====================================================
   useEffect(() => {
     let unsubscribe = null;
 
     const setupNotifications = async () => {
       try {
-        // Request notification permission
         await requestNotificationPermission();
-
-        // Listen for foreground notifications
-        unsubscribe = await listenForMessages(
-          (payload) => {
-            console.log(
-              "Notification Received:",
-              payload
-            );
-
-            const title =
-              payload.notification?.title ||
-              "RailSwap Notification";
-
-            const body =
-              payload.notification?.body ||
-              "You have a new notification.";
-
-            alert(
-              `${title}\n\n${body}`
-            );
-          }
-        );
+        unsubscribe = await listenForMessages((payload) => {
+          const title = payload.notification?.title || "Seat Exchange Alert";
+          const body = payload.notification?.body || "Update on your seat exchange.";
+          setMessage(`🔔 ${title}: ${body}`);
+        });
       } catch (error) {
-        console.error(
-          "Notification Setup Error:",
-          error
-        );
+        console.warn("Notification setup:", error.message);
       }
     };
 
     setupNotifications();
 
-    // Cleanup notification listener
     return () => {
-      if (
-        typeof unsubscribe === "function"
-      ) {
-        unsubscribe();
-      }
+      if (typeof unsubscribe === "function") unsubscribe();
     };
   }, []);
 
   // =====================================================
-  // FETCH ALL SEAT EXCHANGE REQUESTS
+  // FETCH REQUESTS & PAYMENTS
   // =====================================================
-
   const fetchRequests = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/seat-exchange/requests"
-      );
+      const res = await getAllSeatExchangeRequests();
+      const list = res.data || [];
+      setRequests(list);
 
-      setRequests(
-        response.data.data || []
-      );
+      const myReq = list.find((item) => item.user === "user123" || item.user === "user");
+      if (myReq) {
+        setLatestRequest(myReq);
+      }
     } catch (error) {
-      console.error(
-        "Fetch Requests Error:",
-        error
-      );
+      console.error("Fetch Requests Error:", error);
     }
   };
 
-  // =====================================================
-  // FETCH REQUESTS WHEN PAGE LOADS
-  // =====================================================
+  const fetchPayments = async () => {
+    try {
+      const res = await getPaymentHistory("user123");
+      setPaymentHistory(res.data || []);
+    } catch (error) {
+      console.error("Fetch Payments Error:", error);
+    }
+  };
 
   useEffect(() => {
-    const loadRequests = async () => {
-      await fetchRequests();
-    };
-
-    loadRequests();
+    fetchRequests();
+    fetchPayments();
   }, []);
 
   // =====================================================
-  // SUBMIT SEAT EXCHANGE REQUEST
+  // SUBMIT REQUEST (Directly in PENDING state - No upfront payment)
   // =====================================================
-
-  const submitSeatExchange = async (
-    formData
-  ) => {
+  const submitSeatExchange = async (formData) => {
     try {
       setLoading(true);
       setMessage("");
-      setMatches([]);
+      setErrorMsg("");
 
-      const response = await axios.post(
-        "http://localhost:5000/api/seat-exchange/request",
-        {
-          user: "user123",
-          ...formData,
-        }
-      );
+      const res = await createSeatExchangeRequest(formData);
+      const created = res.data;
 
-      setMessage(
-        response.data.message ||
-          "Seat Exchange Request Created Successfully"
-      );
-
-      setLatestRequest(
-        response.data.data || {
-          user: "user123",
-          ...formData,
-        }
-      );
+      setLatestRequest(created);
+      setMessage("✓ Seat exchange request posted in Pending status! No payment required now.");
 
       await fetchRequests();
+      setActiveTab("requester");
     } catch (error) {
-      console.error(
-        "Submit Request Error:",
-        error
-      );
-
-      setMessage(
-        error.response?.data?.message ||
-          "Something went wrong"
-      );
+      console.error("Submit Request Error:", error);
+      setErrorMsg(error.response?.data?.message || "Failed to create seat exchange request.");
     } finally {
       setLoading(false);
     }
   };
 
   // =====================================================
+  // RECEIVER ACCEPTS SEAT SWAP -> UNLOCKS PAYTM SCREEN FOR REQUESTER
+  // =====================================================
+  const handleAccept = async (requestId, targetUserId) => {
+    try {
+      setMessage("");
+      setErrorMsg("");
+
+      const res = await acceptSeatExchange(requestId, targetUserId || "user123");
+      const updatedItem = res.data;
+
+      setMessage("🎉 Seat Exchange Confirmed! Paytm Payment Screen has been unlocked for the requester.");
+
+      // Update state locally
+      setRequests((prev) =>
+        prev.map((item) => (item.id === requestId ? updatedItem : item))
+      );
+      setMatches((prev) =>
+        prev.map((item) => (item.id === requestId ? updatedItem : item))
+      );
+
+      await fetchRequests();
+    } catch (error) {
+      console.error("Accept Error:", error);
+      setErrorMsg(error.response?.data?.message || "Failed to accept seat exchange.");
+    }
+  };
+
+  // =====================================================
+  // REQUESTER PAYS ₹50 VIA PAYTM AFTER ACCEPTANCE
+  // =====================================================
+  const handlePaytmPayment = async () => {
+    if (!unlockedPaymentRequest) return;
+
+    try {
+      setProcessingPaytm(true);
+      setErrorMsg("");
+
+      const res = await processPaytmPostAcceptancePayment({
+        requestId: unlockedPaymentRequest.id,
+        amount: 50,
+        paymentMethod: "PAYTM",
+      });
+
+      setMessage(`✅ Paytm Payment of ₹50 Successful! (Txn ID: ${res.transactionId}). Exchange Completed!`);
+      setShowPaytmModal(false);
+      setUnlockedPaymentRequest(null);
+
+      await fetchRequests();
+      await fetchPayments();
+    } catch (error) {
+      console.error("Paytm Payment Error:", error);
+      setErrorMsg(error.response?.data?.message || "Paytm payment processing failed. Try again.");
+    } finally {
+      setProcessingPaytm(false);
+    }
+  };
+
+  // =====================================================
   // FIND MATCHING PASSENGERS
   // =====================================================
+  const findMatches = async (targetRequest = null) => {
+    const req = targetRequest || latestRequest || requests[0];
 
-  const findMatches = async () => {
+    if (!req) {
+      setMessage("Please submit a seat exchange request first.");
+      return;
+    }
+
     try {
       setMatchLoading(true);
       setMessage("");
+      setErrorMsg("");
+      setActiveTab("matches");
 
-      if (!latestRequest) {
-        setMessage(
-          "Please submit a seat exchange request first."
-        );
-        return;
+      const res = await findMatchingPassengers({
+        trainNumber: req.trainNumber,
+        journeyDate: req.journeyDate,
+        boardingStation: req.boardingStation,
+        destinationStation: req.destinationStation,
+        preferredCoach: req.preferredCoach,
+        preferredSeatNumber: req.preferredSeatNumber,
+        requestId: req.id,
+      });
+
+      setMatches(res.data || []);
+      if (res.data?.length === 0) {
+        setMessage("No matching passengers found on this train/date currently.");
+      } else {
+        setMessage(`Found ${res.data.length} matching passengers using AI match scoring!`);
       }
-
-      const response = await axios.post(
-        "http://localhost:5000/api/seat-exchange/find-matches",
-        {
-          trainNumber:
-            latestRequest.trainNumber,
-
-          journeyDate:
-            latestRequest.journeyDate,
-
-          boardingStation:
-            latestRequest.boardingStation,
-
-          destinationStation:
-            latestRequest.destinationStation,
-
-          preferredSeat:
-            latestRequest.preferredSeat,
-        }
-      );
-
-      setMatches(
-        response.data.data || []
-      );
-
-      setMessage(
-        response.data.message ||
-          "Matching passengers found"
-      );
     } catch (error) {
-      console.error(
-        "Find Matches Error:",
-        error
-      );
-
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to find matching passengers"
-      );
+      console.error("Find Matches Error:", error);
+      setErrorMsg(error.response?.data?.message || "Failed to search matching passengers.");
     } finally {
       setMatchLoading(false);
     }
   };
 
   // =====================================================
-  // ACCEPT SEAT EXCHANGE
+  // REJECT / CANCEL REQUEST
   // =====================================================
-
-  const handleAccept = async (
-    requestId,
-    matchedUserId
-  ) => {
+  const handleReject = async (requestId) => {
     try {
       setMessage("");
-
-      const response = await axios.patch(
-        `http://localhost:5000/api/seat-exchange/accept/${requestId}`,
-        {
-          matchedUserId:
-            matchedUserId || "user123",
-        }
-      );
-
-      setMessage(
-        response.data.message ||
-          "Seat exchange accepted successfully"
-      );
-
+      setErrorMsg("");
+      await rejectSeatExchange(requestId);
+      setMessage("Seat exchange request rejected.");
+      setMatches((prev) => prev.filter((item) => item.id !== requestId));
       await fetchRequests();
-
-      setMatches((prevMatches) =>
-        prevMatches.map((item) =>
-          item.id === requestId
-            ? {
-                ...item,
-                status: "ACCEPTED",
-                matchedUser:
-                  matchedUserId ||
-                  "user123",
-              }
-            : item
-        )
-      );
     } catch (error) {
-      console.error(
-        "Accept Error:",
-        error
-      );
-
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to accept seat exchange"
-      );
+      console.error("Reject Error:", error);
+      setErrorMsg(error.response?.data?.message || "Failed to reject request.");
     }
   };
 
-  // =====================================================
-  // REJECT SEAT EXCHANGE
-  // =====================================================
-
-  const handleReject = async (
-    requestId
-  ) => {
+  const handleCancel = async (requestId) => {
     try {
       setMessage("");
-
-      const response = await axios.patch(
-        `http://localhost:5000/api/seat-exchange/reject/${requestId}`
-      );
-
-      setMessage(
-        response.data.message ||
-          "Seat exchange rejected successfully"
-      );
-
-      setMatches((prevMatches) =>
-        prevMatches.filter(
-          (item) =>
-            item.id !== requestId
-        )
-      );
-
+      setErrorMsg("");
+      await cancelSeatExchange(requestId);
+      setMessage("Seat exchange request cancelled successfully.");
       await fetchRequests();
     } catch (error) {
-      console.error(
-        "Reject Error:",
-        error
-      );
-
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to reject seat exchange"
-      );
+      console.error("Cancel Error:", error);
+      setErrorMsg(error.response?.data?.message || "Failed to cancel request.");
     }
   };
 
-  // =====================================================
-  // CANCEL MY REQUEST
-  // =====================================================
-
-  const handleCancel = async (
-    requestId
-  ) => {
-    try {
-      setMessage("");
-
-      const response = await axios.patch(
-        `http://localhost:5000/api/seat-exchange/cancel/${requestId}`
-      );
-
-      setMessage(
-        response.data.message ||
-          "Seat exchange cancelled successfully"
-      );
-
-      await fetchRequests();
-    } catch (error) {
-      console.error(
-        "Cancel Error:",
-        error
-      );
-
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to cancel request"
-      );
+  // Filtered Matches
+  const filteredMatches = matches.filter((item) => {
+    if (coachFilter !== "ALL" && item.coach?.toUpperCase() !== coachFilter.toUpperCase()) {
+      return false;
     }
-  };
+    if (berthFilter !== "ALL" && item.seatType !== berthFilter) {
+      return false;
+    }
+    return true;
+  });
 
-  // =====================================================
-  // CURRENT USER REQUEST
-  // =====================================================
+  // Categorize Requests for Requester Dashboard
+  const requesterPending = requests.filter((r) => r.status === "PENDING");
+  const requesterAccepted = requests.filter((r) => r.status === "ACCEPTED" || r.paymentUnlocked);
+  const requesterCompleted = requests.filter((r) => r.status === "COMPLETED" || r.status === "PAYMENT_SUCCESSFUL");
+  const requesterRejected = requests.filter((r) => r.status === "REJECTED");
 
-  const myRequest = requests.find(
-    (item) =>
-      item.user === "user123"
-  );
+  // Categorize Requests for Receiver Dashboard
+  const receiverIncoming = requests.filter((r) => r.status === "PENDING");
+  const receiverAccepted = requests.filter((r) => r.status === "ACCEPTED" || r.status === "COMPLETED");
 
-  // =====================================================
-  // UI
-  // =====================================================
+  const myRequest = requests.find((item) => item.user === "user123" || item.user === "user") || latestRequest;
 
   return (
     <div className="seat-container">
-
-      {/* HEADER */}
-
-      <div className="page-header">
-
-        <h1>
-          🚆 Seat Exchange
-        </h1>
-
-        <p>
-          Find compatible passengers and
-          exchange your seat with ease.
-        </p>
-
-      </div>
-
-      {/* STATISTICS */}
-
-      <div className="stats">
-
-        <div className="card">
-
-          <h2>
-            {
-              requests.filter(
-                (item) =>
-                  item.status ===
-                  "PENDING"
-              ).length
-            }
-          </h2>
-
-          <span>
-            Active Requests
-          </span>
-
-        </div>
-
-        <div className="card">
-
-          <h2>
-            92%
-          </h2>
-
-          <span>
-            Success Rate
-          </span>
-
-        </div>
-
-        <div className="card">
-
-          <h2>
-            {requests.length}
-          </h2>
-
-          <span>
-            Total Requests
-          </span>
-
-        </div>
-
-      </div>
-
-      {/* TOP SECTION */}
-
-      <div className="top-section">
-
-        {/* CURRENT SEAT */}
-
-        <div className="seat-card">
-
-          <h2>
-            Your Current Seat
-          </h2>
-
+      {/* RAILWAY HERO HEADER */}
+      <div className="railway-hero">
+        <div className="hero-content">
+          <span className="hero-badge">INDIAN RAILWAYS SEAT EXCHANGER</span>
           <h1>
-            B2 - 35
+            Smart Seat Exchange <span>Module</span>
           </h1>
-
           <p>
-            Middle Berth
+            Post PNR ticket details, select wanted Coach & Seat number, and receive direct passenger match acceptances.
+            Paytm ₹50 payment unlocks ONLY AFTER passenger accepts your request!
           </p>
-
-          <div className="tags">
-
-            <span>
-              Coach B2
-            </span>
-
-            <span>
-              Confirmed
-            </span>
-
-          </div>
-
-          <div className="journey-info">
-
-            <p>
-              <strong>
-                Train :
-              </strong>{" "}
-              Rajdhani Express
-            </p>
-
-            <p>
-              <strong>
-                Train Number :
-              </strong>{" "}
-              12345
-            </p>
-
-            <p>
-              <strong>
-                Boarding :
-              </strong>{" "}
-              New Delhi
-            </p>
-
-            <p>
-              <strong>
-                Destination :
-              </strong>{" "}
-              Patna
-            </p>
-
-            <p>
-              <strong>
-                Journey Date :
-              </strong>{" "}
-              21 July 2026
-            </p>
-
-          </div>
-
-          <div className="journey-status">
-
-            <h3>
-              Journey Status
-            </h3>
-
-            <div className="status-row">
-
-              <span>
-                Booking Status
-              </span>
-
-              <strong>
-                Confirmed
-              </strong>
-
-            </div>
-
-            <div className="status-row">
-
-              <span>
-                Exchange Status
-              </span>
-
-              <strong>
-                Available
-              </strong>
-
-            </div>
-
-          </div>
-
-          <div className="exchange-info">
-
-            <h3>
-              Why Exchange Your Seat?
-            </h3>
-
-            <p>
-              Find passengers with compatible
-              seat preferences and request a
-              seat exchange for a more
-              comfortable journey.
-            </p>
-
-            <div className="info-points">
-
-              <div>
-                ✓ Verified Passenger
-              </div>
-
-              <div>
-                ✓ Smart Match Suggestions
-              </div>
-
-              <div>
-                ✓ Secure Seat Exchange
-              </div>
-
-            </div>
-
-          </div>
-
         </div>
 
-        {/* SEAT EXCHANGE FORM */}
-
-        <div className="preference">
-
-          <h2>
-            Seat Exchange Request
-          </h2>
-
-          <SeatExchangeForm
-            onSubmit={
-              submitSeatExchange
-            }
-            loading={loading}
-          />
-
-          {message && (
-            <p className="request-message">
-              {message}
-            </p>
-          )}
-
-          {/* FIND MATCH */}
-
-          <button
-            type="button"
-            onClick={findMatches}
-            disabled={
-              matchLoading ||
-              !latestRequest
-            }
-            className="find-match-button"
-          >
-            {matchLoading
-              ? "Finding Matches..."
-              : "🔍 Find Matching Passengers"}
-          </button>
-
-          {/* CANCEL REQUEST */}
-
-          {myRequest &&
-            myRequest.status ===
-              "PENDING" && (
-
-            <button
-              type="button"
-              onClick={() =>
-                handleCancel(
-                  myRequest.id
-                )
-              }
-              className="cancel-button"
-            >
-              Cancel My Request
-            </button>
-
-          )}
-
+        <div className="hero-train">
+          <div className="train-icon">🚆</div>
+          <div className="route-line">
+            <span>●</span>
+            <div></div>
+            <span>●</span>
+          </div>
+          <div className="route-label">
+            <span>POST-ACCEPTANCE PAYMENT</span>
+            <strong>Paytm ₹50 Platform Fee</strong>
+          </div>
         </div>
-
       </div>
 
-      {/* AVAILABLE MATCHES */}
+      {/* NAVIGATION TABS */}
+      <div className="seat-tabs">
+        <button
+          className={activeTab === "requester" ? "tab-btn active" : "tab-btn"}
+          onClick={() => setActiveTab("requester")}
+        >
+          👤 Requester Dashboard ({requests.length})
+        </button>
+        <button
+          className={activeTab === "receiver" ? "tab-btn active" : "tab-btn"}
+          onClick={() => setActiveTab("receiver")}
+        >
+          📥 Receiver Dashboard ({receiverIncoming.length})
+        </button>
+        <button
+          className={activeTab === "matches" ? "tab-btn active" : "tab-btn"}
+          onClick={() => {
+            setActiveTab("matches");
+            if (latestRequest && matches.length === 0) findMatches();
+          }}
+        >
+          🤖 AI Passenger Matches ({matches.length})
+        </button>
+        <button
+          className={activeTab === "history" ? "tab-btn active" : "tab-btn"}
+          onClick={() => setActiveTab("history")}
+        >
+          📜 Exchange History
+        </button>
+        <button
+          className={activeTab === "payments" ? "tab-btn active" : "tab-btn"}
+          onClick={() => setActiveTab("payments")}
+        >
+          💳 Paytm Payment History ({paymentHistory.length})
+        </button>
+      </div>
 
-      <div className="match-section">
+      {/* ALERTS */}
+      {message && <div className="alert alert-info">{message}</div>}
+      {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
 
-        <h2>
-          Available Matches
-        </h2>
-
-        {matchLoading && (
-          <p>
-            Finding compatible passengers...
-          </p>
-        )}
-
-        {!matchLoading &&
-          matches.length === 0 && (
-
-          <p>
-            No matching passengers found.
-            Submit your request and click
-            "Find Matching Passengers".
-          </p>
-
-        )}
-
-        {!matchLoading &&
-          matches.map((item) => (
-
-            <div
-              className="match-card"
-              key={item.id}
-            >
-
-              <div className="left">
-
-                <div className="avatar">
-
-                  {(
-                    item.passengerName ||
-                    "P"
-                  ).charAt(0)}
-
+      {/* =======================================
+          TAB 1: REQUESTER DASHBOARD
+      ======================================= */}
+      {activeTab === "requester" && (
+        <div className="dashboard-view">
+          <div className="top-section">
+            {/* REQUEST SEAT SWAP FORM */}
+            <div className="preference card-container">
+              <div className="form-header">
+                <div className="form-icon">🔁</div>
+                <div>
+                  <h2>Post Seat Exchange Request</h2>
+                  <p>PNR ticket details are auto-filled. Select wanted Coach & Seat number.</p>
                 </div>
-
-                <div className="details">
-
-                  <h3>
-                    {
-                      item.passengerName ||
-                      "Passenger"
-                    }
-                  </h3>
-
-                  <p>
-                    <strong>
-                      Age :
-                    </strong>{" "}
-                    {item.age}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Gender :
-                    </strong>{" "}
-                    {item.gender}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Current Seat :
-                    </strong>{" "}
-                    {item.coach}-
-                    {item.seatNumber}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Seat Type :
-                    </strong>{" "}
-                    {item.seatType}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Preferred Seat :
-                    </strong>{" "}
-                    {item.preferredSeat}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Boarding :
-                    </strong>{" "}
-                    {item.boardingStation}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Destination :
-                    </strong>{" "}
-                    {item.destinationStation}
-                  </p>
-
-                </div>
-
               </div>
 
-              <div className="right">
+              <SeatExchangeForm onSubmit={submitSeatExchange} loading={loading} />
+            </div>
 
-                {item.status ===
-                  "ACCEPTED" ? (
+            {/* MY ACTIVE REQUEST CARD */}
+            <div className="seat-card">
+              <span className="section-label">MY ACTIVE TICKET & REQUEST STATUS</span>
+              <div className="journey-heading">
+                <div>
+                  <h2>{myRequest ? myRequest.trainName : "12951 - Rajdhani Express"}</h2>
+                  <span>PNR: {myRequest ? myRequest.pnr : "2418593021"}</span>
+                </div>
+                <span className="verified-badge">✓ PNR Auto-Verified</span>
+              </div>
 
-                  <div className="exchange-success">
+              <div className="current-seat-box">
+                <div className="seat-visual">
+                  <div className="seat-number">{myRequest ? myRequest.seatNumber : "35"}</div>
+                  <span>{myRequest ? myRequest.coach : "B2"}</span>
+                </div>
+                <div>
+                  <h3>Current Seat: {myRequest ? myRequest.seatType : "Middle Berth"}</h3>
+                  <p>Wanted Seat: <strong>{myRequest?.preferredSeat || "Coach B2 Seat 12"}</strong></p>
+                </div>
+                <span className={`status-badge-lg ${myRequest?.status?.toLowerCase() || "pending"}`}>
+                  {myRequest ? myRequest.status : "PENDING"}
+                </span>
+              </div>
 
-                    <div className="success-icon">
-                      ✓
-                    </div>
-
+              {/* POST-ACCEPTANCE PAYTM PAYMENT UNLOCKED BANNER */}
+              {myRequest && (myRequest.status === "ACCEPTED" || myRequest.paymentUnlocked) && !myRequest.donationPaid && (
+                <div className="paytm-unlocked-banner">
+                  <div className="banner-left">
+                    <span className="paytm-logo">Paytm</span>
                     <div>
+                      <h4>🎉 Seat Exchange Confirmed!</h4>
+                      <p>Passenger accepted your request. Paytm Payment Screen is now unlocked.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setUnlockedPaymentRequest(myRequest);
+                      setShowPaytmModal(true);
+                    }}
+                    className="paytm-pay-now-btn"
+                  >
+                    Pay Paytm ₹50 Now
+                  </button>
+                </div>
+              )}
 
-                      <h3>
-                        Seat Exchange Accepted
-                      </h3>
+              <div className="journey-grid">
+                <div>
+                  <span>BOARDING</span>
+                  <strong>{myRequest ? myRequest.boardingStation : "New Delhi (NDLS)"}</strong>
+                </div>
+                <div>
+                  <span>DESTINATION</span>
+                  <strong>{myRequest ? myRequest.destinationStation : "Mumbai Central (MMCT)"}</strong>
+                </div>
+                <div>
+                  <span>DATE</span>
+                  <strong>{myRequest ? myRequest.journeyDate : "2026-08-15"}</strong>
+                </div>
+                <div>
+                  <span>PAYMENT</span>
+                  <strong className={myRequest?.donationPaid ? "text-success" : "text-warning"}>
+                    {myRequest?.donationPaid ? "₹50 Paid ✓" : "Unlocked Post-Acceptance"}
+                  </strong>
+                </div>
+              </div>
 
-                      <p>
-                        Your seat exchange request
-                        has been accepted successfully.
-                      </p>
+              <button
+                type="button"
+                onClick={() => findMatches()}
+                disabled={matchLoading}
+                className="find-match-button"
+              >
+                {matchLoading ? "Searching AI Matches..." : "🔍 Find Matching Passengers"}
+              </button>
+            </div>
+          </div>
 
-                      <div className="exchange-details">
+          {/* REQUESTER CATEGORIZED LISTS */}
+          <div className="dashboard-sections-grid">
+            {/* PENDING REQUESTS */}
+            <div className="dash-box">
+              <h3>⏳ Pending Requests ({requesterPending.length})</h3>
+              {requesterPending.length === 0 ? (
+                <p className="empty-text">No pending requests.</p>
+              ) : (
+                requesterPending.map((item) => (
+                  <div className="mini-request-card" key={item.id}>
+                    <div>
+                      <strong>{item.trainName}</strong> ({item.coach}-{item.seatNumber} ➔ {item.preferredSeat})
+                      <div className="badge-sub">Status: PENDING (Waiting for Acceptance)</div>
+                    </div>
+                    <button className="cancel-sm" onClick={() => handleCancel(item.id)}>Cancel</button>
+                  </div>
+                ))
+              )}
+            </div>
 
-                        <div>
+            {/* ACCEPTED / PAYMENT PENDING */}
+            <div className="dash-box highlight-box">
+              <h3>🎉 Accepted & Payment Pending ({requesterAccepted.length})</h3>
+              {requesterAccepted.length === 0 ? (
+                <p className="empty-text">No accepted requests awaiting payment.</p>
+              ) : (
+                requesterAccepted.map((item) => (
+                  <div className="mini-request-card" key={item.id}>
+                    <div>
+                      <strong>{item.trainName}</strong> — Exchange Confirmed!
+                      <div className="badge-sub text-success font-bold">Paytm Payment Screen Unlocked!</div>
+                    </div>
+                    <button
+                      className="paytm-sm-btn"
+                      onClick={() => {
+                        setUnlockedPaymentRequest(item);
+                        setShowPaytmModal(true);
+                      }}
+                    >
+                      Pay Paytm ₹50
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
 
-                          <span>
-                            Your Seat
-                          </span>
+            {/* COMPLETED EXCHANGES */}
+            <div className="dash-box">
+              <h3>✅ Completed Exchanges ({requesterCompleted.length})</h3>
+              {requesterCompleted.length === 0 ? (
+                <p className="empty-text">No completed exchanges yet.</p>
+              ) : (
+                requesterCompleted.map((item) => (
+                  <div className="mini-request-card" key={item.id}>
+                    <div>
+                      <strong>{item.passengerName}</strong> ({item.coach}-{item.seatNumber} ➔ {item.preferredSeat})
+                      <div className="text-success font-bold">Exchange Completed ✓</div>
+                    </div>
+                    <button className="receipt-sm-btn" onClick={() => setSelectedReceipt(item)}>Receipt</button>
+                  </div>
+                ))
+              )}
+            </div>
 
-                          <strong>
-                            B2 - 35
-                          </strong>
+            {/* REJECTED REQUESTS */}
+            <div className="dash-box">
+              <h3>❌ Rejected Requests ({requesterRejected.length})</h3>
+              {requesterRejected.length === 0 ? (
+                <p className="empty-text">No rejected requests.</p>
+              ) : (
+                requesterRejected.map((item) => (
+                  <div className="mini-request-card" key={item.id}>
+                    <div>
+                      <strong>{item.passengerName}</strong> ({item.trainName})
+                      <div className="text-danger font-bold">Declined by passenger</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-                        </div>
+      {/* =======================================
+          TAB 2: RECEIVER DASHBOARD
+      ======================================= */}
+      {activeTab === "receiver" && (
+        <div className="dashboard-view">
+          <div className="section-title">
+            <div>
+              <span>RECEIVER NOTIFICATION FLOW</span>
+              <h2>Incoming Seat Swap Requests ({receiverIncoming.length})</h2>
+              <p className="subtext">
+                Strictly Accept & Reject options only. Strictly NO chat, messaging, phone calls, or video calls.
+              </p>
+            </div>
+          </div>
 
-                        <div>
-
-                          <span>
-                            Exchange Partner
-                          </span>
-
-                          <strong>
-                            {
-                              item.passengerName ||
-                              "Passenger"
-                            }
-                          </strong>
-
-                        </div>
-
-                        <div>
-
-                          <span>
-                            Partner Seat
-                          </span>
-
-                          <strong>
-                            {item.coach}-
-                            {item.seatNumber}
-                          </strong>
-
-                        </div>
-
+          <div className="match-list">
+            {receiverIncoming.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📥</div>
+                <h3>No Incoming Requests</h3>
+                <p>When passengers on your train request to swap seats with you, they will appear here with Accept & Reject options.</p>
+              </div>
+            ) : (
+              receiverIncoming.map((item) => (
+                <div className="match-card receiver-card" key={item.id}>
+                  <div className="match-left">
+                    <div className="avatar">{(item.passengerName || "P").charAt(0)}</div>
+                    <div className="details">
+                      <div className="passenger-heading">
+                        <h3>{item.passengerName}</h3>
+                        <span className="verified-passenger">✓ PNR Verified Passenger</span>
                       </div>
 
-                      <span className="accepted-badge">
-                        ✓ ACCEPTED
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                ) : (
-
-                  <>
-
-                    <div className="percentage">
-                      Compatible Passenger
-                    </div>
-
-                    <div className="buttons">
-
-                      <button
-                        className="accept"
-                        onClick={() =>
-                          handleAccept(
-                            item.id,
-                            item.user
-                          )
-                        }
-                      >
-                        Accept
-                      </button>
-
-                      <button
-                        className="reject"
-                        onClick={() =>
-                          handleReject(
-                            item.id
-                          )
-                        }
-                      >
-                        Reject
-                      </button>
-
-                    </div>
-
-                  </>
-
-                )}
-
-              </div>
-
-            </div>
-
-          ))}
-
-      </div>
-
-      {/* ALL REQUESTS */}
-
-      <div className="match-section">
-
-        <h2>
-          My Seat Exchange Requests
-        </h2>
-
-        {requests.length === 0 ? (
-
-          <p>
-            No seat exchange requests found.
-          </p>
-
-        ) : (
-
-          requests.map((item) => (
-
-            <div
-              className="match-card"
-              key={item.id}
-            >
-
-              <div className="left">
-
-                <div className="avatar">
-
-                  {(
-                    item.passengerName ||
-                    "P"
-                  ).charAt(0)}
-
-                </div>
-
-                <div className="details">
-
-                  <h3>
-                    {
-                      item.passengerName ||
-                      "Passenger"
-                    }
-                  </h3>
-
-                  <p>
-                    <strong>
-                      Current Seat :
-                    </strong>{" "}
-                    {item.coach}-
-                    {item.seatNumber}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Seat Type :
-                    </strong>{" "}
-                    {item.seatType}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Preferred Seat :
-                    </strong>{" "}
-                    {item.preferredSeat}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Journey :
-                    </strong>{" "}
-                    {item.boardingStation}
-                    {" → "}
-                    {item.destinationStation}
-                  </p>
-
-                </div>
-
-              </div>
-
-              <div className="request-status-area">
-
-                {item.status ===
-                  "ACCEPTED" ? (
-
-                  <div className="confirmed-box">
-
-                    <div className="confirmed-icon">
-                      ✓
-                    </div>
-
-                    <div>
-
-                      <h3>
-                        Exchange Confirmed
-                      </h3>
-
                       <p>
-                        Your seat exchange request
-                        has been accepted successfully.
+                        <strong>Train:</strong> {item.trainName} ({item.trainNumber}) • <strong>Date:</strong> {item.journeyDate}
                       </p>
 
-                      <span className="accepted-badge">
-                        ✓ ACCEPTED
-                      </span>
-
+                      <div className="seat-exchange-row">
+                        <div className="mini-seat">
+                          <span>THEIR SEAT</span>
+                          <strong>{item.coach}-{item.seatNumber}</strong>
+                          <small>{item.seatType}</small>
+                        </div>
+                        <div className="exchange-arrow">➔</div>
+                        <div className="mini-seat preferred">
+                          <span>WANTED SEAT</span>
+                          <strong>{item.preferredSeat}</strong>
+                          <small>Requested Swap</small>
+                        </div>
+                      </div>
                     </div>
-
                   </div>
 
-                ) : item.status ===
-                  "REJECTED" ? (
+                  <div className="match-right">
+                    <div className="no-chat-notice">🔒 No Chat / Calls Needed</div>
+                    <div className="receiver-action-buttons">
+                      <button className="accept" onClick={() => handleAccept(item.id, "receiverUser")}>
+                        ✓ Accept Swap
+                      </button>
+                      <button className="reject" onClick={() => handleReject(item.id)}>
+                        ✕ Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-                  <span className="rejected-badge">
-                    ✕ REJECTED
-                  </span>
-
-                ) : item.status ===
-                  "CANCELLED" ? (
-
-                  <span className="cancelled-badge">
-                    CANCELLED
-                  </span>
-
-                ) : (
-
-                  <span className="pending-badge">
-                    ⏳ PENDING
-                  </span>
-
-                )}
-
+          {/* RECEIVER COMPLETED & REWARDS */}
+          <div className="receiver-history-section margin-top-20">
+            <h3>🎁 Receiver Reward & Completed Exchanges ({receiverAccepted.length})</h3>
+            <div className="payment-table">
+              <div className="payment-row header">
+                <span>Passenger</span>
+                <span>Swapped Seat</span>
+                <span>Status</span>
+                <span>Reward Escrow</span>
               </div>
+              {receiverAccepted.length === 0 ? (
+                <div className="payment-row">
+                  <span style={{ gridColumn: "span 4", textAlign: "center" }}>No accepted exchanges yet.</span>
+                </div>
+              ) : (
+                receiverAccepted.map((r) => (
+                  <div className="payment-row" key={r.id}>
+                    <strong>{r.passengerName}</strong>
+                    <span>{r.coach}-{r.seatNumber} ➔ {r.preferredSeat}</span>
+                    <span className="status-success">✓ {r.status}</span>
+                    <span className="amount text-success">+₹50 Escrow Reward</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* =======================================
+          TAB 3: AI PASSENGER MATCHES
+      ======================================= */}
+      {activeTab === "matches" && (
+        <div className="match-section">
+          <div className="section-title">
+            <div>
+              <span>AI RECOMMENDED SWAPS</span>
+              <h2>Matching Passengers ({filteredMatches.length})</h2>
             </div>
 
-          ))
+            <div className="filter-controls">
+              <select value={coachFilter} onChange={(e) => setCoachFilter(e.target.value)}>
+                <option value="ALL">All Coaches</option>
+                <option value="B2">Coach B2</option>
+                <option value="S3">Coach S3</option>
+                <option value="A1">Coach A1</option>
+              </select>
 
-        )}
+              <select value={berthFilter} onChange={(e) => setBerthFilter(e.target.value)}>
+                <option value="ALL">All Berth Types</option>
+                <option value="Lower Berth">Lower Berth</option>
+                <option value="Middle Berth">Middle Berth</option>
+                <option value="Upper Berth">Upper Berth</option>
+              </select>
+            </div>
+          </div>
 
-      </div>
+          {matchLoading && <div className="loading-state">Finding compatible passengers using AI match scoring...</div>}
 
+          {!matchLoading && filteredMatches.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">🔍</div>
+              <h3>No Matches Found Currently</h3>
+              <p>Post a request to auto-match passengers on your train.</p>
+            </div>
+          )}
+
+          {!matchLoading &&
+            filteredMatches.map((item) => (
+              <div className="match-card" key={item.id}>
+                <div className="match-left">
+                  <div className="avatar">{(item.passengerName || "P").charAt(0)}</div>
+
+                  <div className="details">
+                    <div className="passenger-heading">
+                      <h3>{item.passengerName}</h3>
+                      <span className="verified-passenger">✓ Verified PNR Ticket</span>
+                    </div>
+
+                    <p>
+                      <strong>Age/Gender:</strong> {item.age} yrs • {item.gender}
+                    </p>
+
+                    <div className="seat-exchange-row">
+                      <div className="mini-seat">
+                        <span>CURRENT SEAT</span>
+                        <strong>{item.coach}-{item.seatNumber}</strong>
+                        <small>{item.seatType}</small>
+                      </div>
+
+                      <div className="exchange-arrow">➔</div>
+
+                      <div className="mini-seat preferred">
+                        <span>WANTED SEAT</span>
+                        <strong>{item.preferredSeat}</strong>
+                        <small>Preferred</small>
+                      </div>
+                    </div>
+
+                    <div className="ai-tags-container">
+                      {(item.aiRecommendations || ["Recommend Same Coach First", "Highest Success Probability"]).map(
+                        (tag, idx) => (
+                          <span className="ai-tag" key={idx}>
+                            ✨ {tag}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="match-right">
+                  <div className="match-score">
+                    <span>AI MATCH SCORE</span>
+                    <strong>{item.matchPercentage || 95}% Match</strong>
+                  </div>
+
+                  {item.status === "ACCEPTED" ? (
+                    <div className="accepted-status-badge">✓ ACCEPTED & UNLOCKED</div>
+                  ) : (
+                    <div className="buttons">
+                      <button className="accept" onClick={() => handleAccept(item.id, item.user)}>
+                        Accept Swap
+                      </button>
+                      <button className="reject" onClick={() => handleReject(item.id)}>
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* =======================================
+          TAB 4: EXCHANGE HISTORY
+      ======================================= */}
+      {activeTab === "history" && (
+        <div className="match-section">
+          <h2>Complete Seat Exchange History</h2>
+
+          {requests.length === 0 ? (
+            <div className="empty-state">
+              <h3>No Exchange History</h3>
+            </div>
+          ) : (
+            requests.map((item) => (
+              <div className="match-card" key={item.id}>
+                <div className="match-left">
+                  <div className="avatar">{(item.passengerName || "P").charAt(0)}</div>
+                  <div className="details">
+                    <h3>{item.passengerName}</h3>
+                    <p>
+                      <strong>Train:</strong> {item.trainName} ({item.trainNumber}) • <strong>PNR:</strong> {item.pnr}
+                    </p>
+                    <p>
+                      <strong>Seat:</strong> {item.coach}-{item.seatNumber} ({item.seatType}) ➔ <strong>Wanted:</strong> {item.preferredSeat}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="match-right">
+                  <span className={`status-badge-lg ${item.status.toLowerCase()}`}>
+                    {item.status}
+                  </span>
+
+                  {(item.status === "COMPLETED" || item.status === "ACCEPTED") && (
+                    <button className="view-receipt-btn" onClick={() => setSelectedReceipt(item)}>
+                      🧾 View Receipt
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* =======================================
+          TAB 5: PAYTM PAYMENT HISTORY
+      ======================================= */}
+      {activeTab === "payments" && (
+        <div className="match-section">
+          <h2>Paytm Payment & Transaction History</h2>
+          <p className="subtext">Logs for ₹50 post-acceptance Paytm transactions and escrow transfers.</p>
+
+          <div className="payment-table">
+            <div className="payment-row header">
+              <span>Transaction ID</span>
+              <span>Payment Provider</span>
+              <span>Type</span>
+              <span>Amount</span>
+              <span>Status</span>
+            </div>
+
+            {paymentHistory.length === 0 ? (
+              <div className="payment-row">
+                <span style={{ gridColumn: "span 5", textAlign: "center" }}>No payment transactions recorded yet.</span>
+              </div>
+            ) : (
+              paymentHistory.map((tx) => (
+                <div className="payment-row" key={tx.id}>
+                  <strong className="tx-id">{tx.transactionId}</strong>
+                  <span className="paytm-badge">Paytm Gateway</span>
+                  <span>{tx.type}</span>
+                  <span className="amount">₹{tx.amount || 50}</span>
+                  <span className="status-success">✓ {tx.status || "SUCCESS"}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =======================================
+          MODAL 1: PAYTM POST-ACCEPTANCE PAYMENT MODAL
+      ======================================= */}
+      {showPaytmModal && unlockedPaymentRequest && (
+        <div className="modal-backdrop">
+          <div className="modal-card paytm-modal-card">
+            <div className="paytm-modal-header">
+              <div className="paytm-branding">
+                <span className="paytm-logo-text">Paytm</span>
+                <span className="paytm-sub-text">POST-ACCEPTANCE PAYMENT</span>
+              </div>
+              <button className="close-btn" onClick={() => setShowPaytmModal(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="confirmed-swap-badge">
+                🎉 Passenger Accepted Your Seat Swap Request!
+              </div>
+
+              <div className="swap-details-box">
+                <div>
+                  <span>Passenger:</span> <strong>{unlockedPaymentRequest.passengerName}</strong>
+                </div>
+                <div>
+                  <span>Assigned Seat:</span> <strong>Coach {unlockedPaymentRequest.coach} Seat #{unlockedPaymentRequest.seatNumber}</strong>
+                </div>
+                <div>
+                  <span>Exchanged Seat:</span> <strong>{unlockedPaymentRequest.preferredSeat}</strong>
+                </div>
+              </div>
+
+              <div className="paytm-amount-box">
+                <span>Total Amount to Pay</span>
+                <h2>₹50.00</h2>
+                <small>Platform Fee & Reward Escrow</small>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="paytm-confirm-btn"
+                onClick={handlePaytmPayment}
+                disabled={processingPaytm}
+              >
+                {processingPaytm ? "Processing Paytm Payment..." : "Pay ₹50 via Paytm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =======================================
+          MODAL 2: OFFICIAL SEAT EXCHANGE RECEIPT
+      ======================================= */}
+      {selectedReceipt && (
+        <div className="modal-backdrop">
+          <div className="modal-card receipt-card">
+            <div className="modal-header">
+              <h2>Official Seat Exchange Receipt</h2>
+              <button className="close-btn" onClick={() => setSelectedReceipt(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body printable-receipt">
+              <div className="receipt-hero">
+                <div className="rail-logo">🚆 RAILSWAP OFFICIAL RECEIPT</div>
+                <span>TXN: {selectedReceipt.transactionId || "PAYTM_8920194"}</span>
+              </div>
+
+              <div className="seat-transition-box">
+                <div className="old-seat">
+                  <span>OLD SEAT</span>
+                  <h3>{selectedReceipt.coach}-{selectedReceipt.seatNumber}</h3>
+                  <small>{selectedReceipt.seatType}</small>
+                </div>
+
+                <div className="transition-arrow">➔</div>
+
+                <div className="new-seat">
+                  <span>NEW SEAT</span>
+                  <h3>{selectedReceipt.preferredSeat}</h3>
+                  <small>Exchanged</small>
+                </div>
+              </div>
+
+              <div className="receipt-details">
+                <div>
+                  <span>Passenger:</span> <strong>{selectedReceipt.passengerName}</strong>
+                </div>
+                <div>
+                  <span>PNR:</span> <strong>{selectedReceipt.pnr}</strong>
+                </div>
+                <div>
+                  <span>Train:</span> <strong>{selectedReceipt.trainName} ({selectedReceipt.trainNumber})</strong>
+                </div>
+                <div>
+                  <span>Status:</span> <strong className="green-text">EXCHANGE COMPLETED ✓</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="confirm-pay-btn" onClick={() => window.print()}>
+                🖨️ Print / Download Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

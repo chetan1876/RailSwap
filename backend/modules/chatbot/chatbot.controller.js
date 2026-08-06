@@ -30,13 +30,13 @@ const sendMessage = async (req, res) => {
       ...data,
     });
   } catch (error) {
-  console.error("========== GEMINI ERROR ==========");
-  console.error(error);
-  console.error(error.stack);
+    console.error("========== GEMINI ERROR ==========");
+    console.error(error);
+    console.error(error.stack);
 
-  return res.status(500).json({
-    success: false,
-    message: error.message,
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

@@ -16,11 +16,7 @@ const Sidebar = () => {
     icon: "fa-solid fa-ticket",
     path: "/pnr-verification",
   },
-  {
-    name: "Family Linking",
-    icon: "fa-solid fa-people-group",
-    path: "/family-linking",
-  },
+  
   {
     name: "QR Verification",
     icon: "fa-solid fa-qrcode",
@@ -41,31 +37,13 @@ const Sidebar = () => {
     icon: "fa-solid fa-comments",
     path: "/chatbot",
   },
-  {
-    name: "Coach Heatmap",
-    icon: "fa-solid fa-map",
-    path: "/coach-heatmap",
-  },
-  {
-    name: "Live Coach Map",
-    icon: "fa-solid fa-location-dot",
-    path: "/live-coach-map",
-  },
+  
   {
     name: "Train Information",
     icon: "fa-solid fa-train",
     path: "/train-information",
   },
-  {
-    name: "Station Navigator",
-    icon: "fa-solid fa-compass",
-    path: "/station-navigator",
-  },
-  {
-    name: "Reward System",
-    icon: "fa-solid fa-gift",
-    path: "/reward-system",
-  },
+ 
   {
     name: "Lost Item AI",
     icon: "fa-solid fa-magnifying-glass",
@@ -76,11 +54,7 @@ const Sidebar = () => {
     icon: "fa-solid fa-chart-column",
     path: "/crowd-density",
   },
-  {
-    name: "Women Safety",
-    icon: "fa-solid fa-shield-halved",
-    path: "/women-safety",
-  },
+  
   {
     name: "Emergency Medical",
     icon: "fa-solid fa-briefcase-medical",

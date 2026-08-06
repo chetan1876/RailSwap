@@ -1,6 +1,10 @@
 "use strict";
 
-const { BOOKING_PROVIDERS, extractStationCode, formatDateYYYYMMDD } = require("./bookingProvider.config");
+const {
+  BOOKING_PROVIDERS,
+  extractStationCode,
+  formatDateYYYYMMDD,
+} = require("./bookingProvider.config");
 const ApiError = require("../../shared/apiError");
 
 /**
@@ -45,10 +49,14 @@ class BookingService {
     } = bookingData;
 
     if (!trainNumber || !source || !destination || !travelDate) {
-      throw ApiError.badRequest("Missing required train recommendation details for booking.");
+      throw ApiError.badRequest(
+        "Missing required train recommendation details for booking.",
+      );
     }
 
-    const provider = BOOKING_PROVIDERS.find((p) => p.id === (providerId || "irctc"));
+    const provider = BOOKING_PROVIDERS.find(
+      (p) => p.id === (providerId || "irctc"),
+    );
     if (!provider) {
       throw ApiError.badRequest(`Unsupported booking provider: ${providerId}`);
     }

@@ -29,7 +29,10 @@ Only return the title.
     const result = await model.generateContent(prompt);
     return result.response.text().trim() || "New Chat";
   } catch (error) {
-    console.error("Failed to generate chat title, falling back to default:", error);
+    console.error(
+      "Failed to generate chat title, falling back to default:",
+      error,
+    );
     return "New Chat";
   }
 };
@@ -64,7 +67,7 @@ const sendMessage = async ({ userId, sessionId, message }) => {
     if (role === expectedRole) {
       filtered.push({
         role,
-        parts: [{ text: msg.content || "" }]
+        parts: [{ text: msg.content || "" }],
       });
       expectedRole = expectedRole === "user" ? "model" : "user";
     }
@@ -98,8 +101,47 @@ const sendMessage = async ({ userId, sessionId, message }) => {
     history: formattedHistory,
   });
 
-  const result = await chat.sendMessage(message);
-  const reply = result.response.text().trim();
+  let reply;
+  try {
+    const TIMEOUT_MS = 30000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Gemini AI request timed out after 30 seconds. Please try again.")),
+        TIMEOUT_MS
+      )
+    );
+    const result = await Promise.race([chat.sendMessage(message), timeoutPromise]);
+    reply = result.response.text().trim();
+  } catch (geminiError) {
+    const msg = geminiError.message || "";
+
+    if (msg.includes("GEMINI_API_KEY is not configured") || msg.includes("GEMINI_API_KEY")) {
+      throw new Error("Gemini API key is missing. Add GEMINI_API_KEY to your .env file. Get a free key at https://aistudio.google.com/apikey");
+    }
+    if (msg.includes("API_KEY_INVALID") || msg.includes("invalid api key") || msg.includes("API key not valid")) {
+      throw new Error("Invalid Gemini API key. Please check your GEMINI_API_KEY in the .env file.");
+    }
+    if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("429")) {
+      throw new Error("Gemini API quota exceeded. Please wait or upgrade your plan at https://aistudio.google.com");
+    }
+    if (msg.includes("models/") && (msg.includes("not found") || msg.includes("404"))) {
+      throw new Error("Gemini model not found. The configured model may be unsupported or unavailable in your region.");
+    }
+    if (msg.includes("not found") && msg.includes("404")) {
+      throw new Error("Gemini API returned 404. The model may be unavailable or your API key may not have access.");
+    }
+    if (msg.includes("timed out")) {
+      throw new Error("Gemini AI request timed out after 30 seconds. Please try again.");
+    }
+    if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND") || msg.includes("ETIMEDOUT") || msg.includes("network")) {
+      throw new Error("Network error: Unable to reach the Gemini AI service. Check your internet connection.");
+    }
+    if (msg.includes("SERVICE_UNAVAILABLE") || msg.includes("503")) {
+      throw new Error("Gemini AI service is temporarily unavailable. Please try again shortly.");
+    }
+    // Re-throw exact error for any unclassified case
+    throw new Error(geminiError.message || "Gemini AI call failed. Please try again.");
+  }
 
   // Save the user message and then the AI response
   await repository.saveMessage(sessionId, ROLES.USER, message);

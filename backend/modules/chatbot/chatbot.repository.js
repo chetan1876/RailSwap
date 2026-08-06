@@ -3,8 +3,12 @@
 const { db } = require("../../config/firebase");
 const { COLLECTIONS } = require("./chatbot.constants");
 
-const sessionCollection = db.collection(COLLECTIONS.SESSIONS);
-const messageCollection = db.collection(COLLECTIONS.MESSAGES);
+const sessionCollection = db ? db.collection(COLLECTIONS.SESSIONS) : null;
+const messageCollection = db ? db.collection(COLLECTIONS.MESSAGES) : null;
+
+// In-memory fallback stores for offline / unauthenticated Firestore environments
+const inMemorySessions = new Map();
+const inMemoryMessages = new Map();
 
 /**
  * Helper to safely extract milliseconds from Firestore timestamp / Date / serialized object.
@@ -27,17 +31,33 @@ CREATE CHAT SESSION
 ========================================
 */
 const createSession = async (userId, title = "New Chat") => {
-  const sessionRef = sessionCollection.doc();
-
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
   const session = {
-    id: sessionRef.id,
+    id: sessionId,
     userId,
     title,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
-  await sessionRef.set(session);
+  try {
+    if (sessionCollection) {
+      const sessionRef = sessionCollection.doc();
+      const firestoreSession = {
+        ...session,
+        id: sessionRef.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await sessionRef.set(firestoreSession);
+      inMemorySessions.set(sessionRef.id, firestoreSession);
+      return firestoreSession;
+    }
+  } catch (error) {
+    console.warn("Firestore createSession fallback to memory:", error.message);
+  }
+
+  inMemorySessions.set(sessionId, session);
   return session;
 };
 
@@ -47,9 +67,15 @@ GET SESSION
 ========================================
 */
 const getSession = async (sessionId) => {
-  const doc = await sessionCollection.doc(sessionId).get();
-  if (!doc.exists) return null;
-  return doc.data();
+  try {
+    if (sessionCollection) {
+      const doc = await sessionCollection.doc(sessionId).get();
+      if (doc.exists) return doc.data();
+    }
+  } catch (error) {
+    console.warn("Firestore getSession fallback to memory:", error.message);
+  }
+  return inMemorySessions.get(sessionId) || null;
 };
 
 /*
@@ -58,62 +84,105 @@ SAVE MESSAGE
 ========================================
 */
 const saveMessage = async (sessionId, role, content) => {
-  const messageRef = messageCollection.doc();
-
+  const msgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
   const message = {
-    id: messageRef.id,
+    id: msgId,
     sessionId,
     role,
     content,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
 
-  await messageRef.set(message);
+  try {
+    if (messageCollection) {
+      const messageRef = messageCollection.doc();
+      const firestoreMsg = {
+        ...message,
+        id: messageRef.id,
+        createdAt: new Date(),
+      };
+      await messageRef.set(firestoreMsg);
+      await sessionCollection.doc(sessionId).update({
+        updatedAt: new Date(),
+      }).catch(() => {});
+      inMemoryMessages.set(messageRef.id, firestoreMsg);
+      return firestoreMsg;
+    }
+  } catch (error) {
+    console.warn("Firestore saveMessage fallback to memory:", error.message);
+  }
 
-  await sessionCollection.doc(sessionId).update({
-    updatedAt: new Date(),
-  });
-
+  inMemoryMessages.set(msgId, message);
+  const sess = inMemorySessions.get(sessionId);
+  if (sess) {
+    sess.updatedAt = new Date().toISOString();
+  }
   return message;
 };
 
 /*
 ========================================
-GET CHAT HISTORY (SORTED IN-MEMORY TO PREVENT INDEX ERRORS)
+GET CHAT MESSAGES
 ========================================
 */
 const getMessages = async (sessionId) => {
-  const snapshot = await messageCollection
-    .where("sessionId", "==", sessionId)
-    .get();
+  try {
+    if (messageCollection) {
+      const snapshot = await messageCollection
+        .where("sessionId", "==", sessionId)
+        .get();
 
-  const messages = snapshot.docs.map((doc) => doc.data());
+      if (!snapshot.empty) {
+        const messages = snapshot.docs.map((doc) => doc.data());
+        messages.sort((a, b) => getMillis(a.createdAt) - getMillis(b.createdAt));
+        return messages;
+      }
+    }
+  } catch (error) {
+    console.warn("Firestore getMessages fallback to memory:", error.message);
+  }
 
-  messages.sort((a, b) => getMillis(a.createdAt) - getMillis(b.createdAt));
-
-  return messages;
+  const list = Array.from(inMemoryMessages.values()).filter((m) => m.sessionId === sessionId);
+  list.sort((a, b) => getMillis(a.createdAt) - getMillis(b.createdAt));
+  return list;
 };
 
 /*
 ========================================
-GET USER SESSIONS (SORTED IN-MEMORY TO PREVENT INDEX ERRORS)
+GET USER SESSIONS
 ========================================
 */
 const getSessions = async (userId) => {
-  const snapshot = await sessionCollection.where("userId", "==", userId).get();
+  try {
+    if (sessionCollection) {
+      const snapshot = await sessionCollection.where("userId", "==", userId).get();
 
-  const sessions = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+      if (!snapshot.empty) {
+        const sessions = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-  sessions.sort((a, b) => {
+        sessions.sort((a, b) => {
+          const aTime = getMillis(a.updatedAt || a.createdAt);
+          const bTime = getMillis(b.updatedAt || b.createdAt);
+          return bTime - aTime;
+        });
+
+        return sessions;
+      }
+    }
+  } catch (error) {
+    console.warn("Firestore getSessions fallback to memory:", error.message);
+  }
+
+  const list = Array.from(inMemorySessions.values()).filter((s) => s.userId === userId);
+  list.sort((a, b) => {
     const aTime = getMillis(a.updatedAt || a.createdAt);
     const bTime = getMillis(b.updatedAt || b.createdAt);
-    return bTime - aTime; // descending (newest first)
+    return bTime - aTime;
   });
-
-  return sessions;
+  return list;
 };
 
 /*
@@ -122,15 +191,27 @@ RENAME SESSION
 ========================================
 */
 const renameSession = async (sessionId, title) => {
-  await sessionCollection.doc(sessionId).update({
-    title,
-    updatedAt: new Date(),
-  });
+  try {
+    if (sessionCollection) {
+      await sessionCollection.doc(sessionId).update({
+        title,
+        updatedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.warn("Firestore renameSession fallback to memory:", error.message);
+  }
+
+  const sess = inMemorySessions.get(sessionId);
+  if (sess) {
+    sess.title = title;
+    sess.updatedAt = new Date().toISOString();
+  }
 };
 
 /*
 ========================================
-UPDATE SESSION TITLE (COMPATIBILITY WRAPPER)
+UPDATE SESSION TITLE
 ========================================
 */
 const updateSessionTitle = async (sessionId, title) => {
@@ -143,19 +224,27 @@ DELETE SESSION
 ========================================
 */
 const deleteSession = async (sessionId) => {
-  const snapshot = await messageCollection
-    .where("sessionId", "==", sessionId)
-    .get();
+  try {
+    if (messageCollection && sessionCollection) {
+      const snapshot = await messageCollection
+        .where("sessionId", "==", sessionId)
+        .get();
 
-  const batch = db.batch();
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      batch.delete(sessionCollection.doc(sessionId));
+      await batch.commit();
+    }
+  } catch (error) {
+    console.warn("Firestore deleteSession fallback to memory:", error.message);
+  }
 
-  snapshot.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-
-  batch.delete(sessionCollection.doc(sessionId));
-
-  await batch.commit();
+  inMemorySessions.delete(sessionId);
+  for (const [msgId, msg] of inMemoryMessages.entries()) {
+    if (msg.sessionId === sessionId) {
+      inMemoryMessages.delete(msgId);
+    }
+  }
 };
 
 /*
@@ -178,7 +267,7 @@ SEARCH CHAT
 const searchChats = async (userId, keyword) => {
   const sessions = await getSessions(userId);
   return sessions.filter((session) =>
-    (session.title || "").toLowerCase().includes((keyword || "").toLowerCase())
+    (session.title || "").toLowerCase().includes((keyword || "").toLowerCase()),
   );
 };
 
