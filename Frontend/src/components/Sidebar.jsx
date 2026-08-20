@@ -60,6 +60,11 @@ const Sidebar = () => {
     icon: "fa-solid fa-briefcase-medical",
     path: "/emergency-medical",
   },
+  {
+    name: "Train Delay Tracker",
+    icon: "fa-solid fa-clock-rotate-left",
+    path: "/train-delay",
+  },
 ];
 
   return (
