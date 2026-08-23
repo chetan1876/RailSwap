@@ -65,6 +65,11 @@ const Sidebar = () => {
     icon: "fa-solid fa-clock-rotate-left",
     path: "/train-delay",
   },
+  {
+    name: "PNR to RFID",
+    icon: "fa-solid fa-id-card",
+    path: "/pnr-rfid",
+  },
 ];
 
   return (

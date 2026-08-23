@@ -32,6 +32,7 @@ import CrowdDensity from "../components/CrowdDensity";
 import WomenSafety from "../components/WomenSafety";
 import EmergencyMedical from "../components/EmergencyMedical";
 import TrainDelayTracker from "../components/TrainDelayTracker/TrainDelayTracker";
+import PnrRfidRegistration from "../components/PnrRfidRegistration";
 
 /*
 =================================================
@@ -118,6 +119,8 @@ const AppRoutes = () => {
         <Route path="/women-safety" element={<WomenSafety />} />
         <Route path="/emergency-medical" element={<EmergencyMedical />} />
         <Route path="/train-delay" element={<TrainDelayTracker />} />
+        <Route path="/pnr-rfid" element={<PnrRfidRegistration />} />
+        <Route path="/pnr-rfid-registration" element={<PnrRfidRegistration />} />
 
         <Route path="/profile" element={<Profile />} />
 

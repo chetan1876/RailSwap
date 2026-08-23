@@ -3,7 +3,42 @@
 const repository = require("./chatbot.repository");
 const { getGeminiClient } = require("../../config/gemini");
 const { SYSTEM_PROMPT } = require("./chatbot.prompts");
-const { MODEL, ROLES, MAX_HISTORY } = require("./chatbot.constants");
+const { MODEL, MODELS, ROLES, MAX_HISTORY } = require("./chatbot.constants");
+
+/*
+========================================
+HELPER: SMART FALLBACK RESPONSE
+========================================
+*/
+const getFallbackReply = (userMessage) => {
+  const msg = (userMessage || "").toLowerCase().trim();
+
+  if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg === "greetings") {
+    return "Hello! I am your RailSwap AI Assistant. How can I assist you with your railway journey today?";
+  }
+
+  if (msg.includes("what is railswap") || msg.includes("railswap")) {
+    return "RailSwap is a smart railway passenger assistance platform designed to make train travel seamless. Features include Seat Exchange, PNR Verification, Live Train Delay Tracking, Lost Item AI reporting, Digital RFID Registration, and Emergency Medical assistance.";
+  }
+
+  if (msg.includes("seat exchange") || msg.includes("swap seat") || msg.includes("exchange seat")) {
+    return "Seat Exchange allows passengers to request or swap seats with fellow travelers on the same train to get preferred berths or sit together with family members.";
+  }
+
+  if (msg.includes("verify") || msg.includes("pnr")) {
+    return "You can verify your PNR by navigating to the PNR Verification section on RailSwap and entering your 10-digit PNR number to view journey status and coach position.";
+  }
+
+  if (msg.includes("lost") || msg.includes("bag") || msg.includes("item")) {
+    return "If you lose an item during your journey, go to the 'Lost Item AI' section on RailSwap, enter your PNR and item details to register a lost item claim.";
+  }
+
+  if (msg.includes("rfid")) {
+    return "PNR to RFID Registration generates a unique digital RFID identity (e.g. RFID-RS-XXXXXXXX) for your journey, which can be linked to your physical luggage tag for baggage identification.";
+  }
+
+  return "I'm currently unable to connect to the AI service, but I can still help you with RailSwap features like PNR verification, seat exchange, train status, lost item reporting, RFID registration, and emergency assistance.";
+};
 
 /*
 ========================================
@@ -13,28 +48,21 @@ GENERATE CHAT TITLE
 const generateChatTitle = async (message) => {
   try {
     const client = getGeminiClient();
-    const model = client.getGenerativeModel({
-      model: MODEL,
-    });
+    const modelList = MODELS || [MODEL, "gemini-2.5-flash", "gemini-3.6-flash"];
 
-    const prompt = `
-Generate a very short chat title (maximum 5 words).
-
-User message:
-"${message}"
-
-Only return the title.
-`;
-
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim() || "New Chat";
+    for (const modelName of modelList) {
+      try {
+        const model = client.getGenerativeModel({ model: modelName });
+        const prompt = `Generate a very short chat title (maximum 4 words) for: "${message}". Only return the title.`;
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        if (text) return text.replace(/["']/g, "").slice(0, 40);
+      } catch (err) {}
+    }
   } catch (error) {
-    console.error(
-      "Failed to generate chat title, falling back to default:",
-      error,
-    );
-    return "New Chat";
+    console.warn("Notice: Title generation fallback to default title.");
   }
+  return message ? message.slice(0, 30) : "New Chat";
 };
 
 /*
@@ -43,23 +71,24 @@ SEND MESSAGE
 ========================================
 */
 const sendMessage = async ({ userId, sessionId, message }) => {
-  let session = null;
+  const cleanMessage = (message || "").trim();
 
+  // 1. Session Setup
+  let session = null;
   if (!sessionId || sessionId === "null" || sessionId === "undefined") {
-    const title = await generateChatTitle(message);
+    const title = await generateChatTitle(cleanMessage);
     session = await repository.createSession(userId, title);
     sessionId = session.id;
   } else {
     session = await repository.getSession(sessionId);
     if (!session) {
-      throw new Error("Chat session not found");
+      session = await repository.createSession(userId, "New Chat");
+      sessionId = session.id;
     }
   }
 
+  // 2. Format Chat History
   const history = await repository.getMessages(sessionId);
-
-  // Filter messages to construct a strict alternating roles array: [user, model, user, model...]
-  // In @google/generative-ai, history MUST alternate and must start with 'user' and end with 'model'.
   const filtered = [];
   let expectedRole = "user";
   for (const msg of history) {
@@ -73,79 +102,69 @@ const sendMessage = async ({ userId, sessionId, message }) => {
     }
   }
 
-  // If the last element is 'user', remove it because the new message we're sending is 'user'
   if (filtered.length > 0 && filtered[filtered.length - 1].role === "user") {
     filtered.pop();
   }
 
-  // Ensure slice length is even for matching user/model pairs
   let sliceCount = MAX_HISTORY;
-  if (sliceCount % 2 !== 0) {
-    sliceCount--;
-  }
+  if (sliceCount % 2 !== 0) sliceCount--;
   const formattedHistory = filtered.slice(-sliceCount);
 
-  const client = getGeminiClient();
-  const model = client.getGenerativeModel({
-    model: MODEL,
-    systemInstruction: SYSTEM_PROMPT,
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.95,
-      topK: 40,
-      maxOutputTokens: 2048,
-    },
-  });
+  // 3. Attempt Gemini API call across supported candidate models
+  let reply = null;
+  const candidateModels = [MODEL, "gemini-2.5-flash", "gemini-3.6-flash"].filter(Boolean);
 
-  const chat = model.startChat({
-    history: formattedHistory,
-  });
-
-  let reply;
   try {
-    const TIMEOUT_MS = 30000;
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error("Gemini AI request timed out after 30 seconds. Please try again.")),
-        TIMEOUT_MS
-      )
-    );
-    const result = await Promise.race([chat.sendMessage(message), timeoutPromise]);
-    reply = result.response.text().trim();
-  } catch (geminiError) {
-    const msg = geminiError.message || "";
+    const client = getGeminiClient();
 
-    if (msg.includes("GEMINI_API_KEY is not configured") || msg.includes("GEMINI_API_KEY")) {
-      throw new Error("Gemini API key is missing. Add GEMINI_API_KEY to your .env file. Get a free key at https://aistudio.google.com/apikey");
+    for (const modelName of candidateModels) {
+      try {
+        const model = client.getGenerativeModel({
+          model: modelName,
+          systemInstruction: SYSTEM_PROMPT,
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.95,
+            topK: 40,
+            maxOutputTokens: 2048,
+          },
+        });
+
+        const chat = model.startChat({
+          history: formattedHistory,
+        });
+
+        const TIMEOUT_MS = 15000;
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Gemini AI request timeout")), TIMEOUT_MS)
+        );
+
+        const result = await Promise.race([chat.sendMessage(cleanMessage), timeoutPromise]);
+        const text = result.response.text();
+        if (text && text.trim()) {
+          reply = text.trim();
+          break; // Successfully got answer from Gemini API!
+        }
+      } catch (err) {
+        console.warn(`Gemini model ${modelName} note:`, err.message);
+      }
     }
-    if (msg.includes("API_KEY_INVALID") || msg.includes("invalid api key") || msg.includes("API key not valid")) {
-      throw new Error("Invalid Gemini API key. Please check your GEMINI_API_KEY in the .env file.");
-    }
-    if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("429")) {
-      throw new Error("Gemini API quota exceeded. Please wait or upgrade your plan at https://aistudio.google.com");
-    }
-    if (msg.includes("models/") && (msg.includes("not found") || msg.includes("404"))) {
-      throw new Error("Gemini model not found. The configured model may be unsupported or unavailable in your region.");
-    }
-    if (msg.includes("not found") && msg.includes("404")) {
-      throw new Error("Gemini API returned 404. The model may be unavailable or your API key may not have access.");
-    }
-    if (msg.includes("timed out")) {
-      throw new Error("Gemini AI request timed out after 30 seconds. Please try again.");
-    }
-    if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND") || msg.includes("ETIMEDOUT") || msg.includes("network")) {
-      throw new Error("Network error: Unable to reach the Gemini AI service. Check your internet connection.");
-    }
-    if (msg.includes("SERVICE_UNAVAILABLE") || msg.includes("503")) {
-      throw new Error("Gemini AI service is temporarily unavailable. Please try again shortly.");
-    }
-    // Re-throw exact error for any unclassified case
-    throw new Error(geminiError.message || "Gemini AI call failed. Please try again.");
+  } catch (clientErr) {
+    console.warn("Gemini client note:", clientErr.message);
   }
 
-  // Save the user message and then the AI response
-  await repository.saveMessage(sessionId, ROLES.USER, message);
-  await repository.saveMessage(sessionId, ROLES.ASSISTANT, reply);
+  // 4. Fallback Handling if Gemini API fails or returns empty
+  if (!reply) {
+    reply = getFallbackReply(cleanMessage);
+  }
+
+  // 5. Save History & Return
+  try {
+    await repository.saveMessage(sessionId, ROLES.USER, cleanMessage);
+    await repository.saveMessage(sessionId, ROLES.ASSISTANT, reply);
+  } catch (saveErr) {
+    console.warn("Message history save warning:", saveErr.message);
+  }
 
   return {
     sessionId,
@@ -155,63 +174,33 @@ const sendMessage = async ({ userId, sessionId, message }) => {
 
 /*
 ========================================
-NEW CHAT
+NEW CHAT & HISTORY EXPORTS
 ========================================
 */
 const createChat = async (userId) => {
   return await repository.createSession(userId, "New Chat");
 };
 
-/*
-========================================
-GET HISTORY
-========================================
-*/
 const getHistory = async (userId) => {
   return await repository.getSessions(userId);
 };
 
-/*
-========================================
-GET CHAT
-========================================
-*/
 const getChat = async (sessionId) => {
   return await repository.getMessages(sessionId);
 };
 
-/*
-========================================
-RENAME CHAT
-========================================
-*/
 const renameChat = async (sessionId, title) => {
   await repository.renameSession(sessionId, title);
 };
 
-/*
-========================================
-DELETE CHAT
-========================================
-*/
 const deleteChat = async (sessionId) => {
   await repository.deleteSession(sessionId);
 };
 
-/*
-========================================
-CLEAR HISTORY
-========================================
-*/
 const clearHistory = async (userId) => {
   await repository.clearHistory(userId);
 };
 
-/*
-========================================
-SEARCH HISTORY
-========================================
-*/
 const searchHistory = async (userId, keyword) => {
   return await repository.searchChats(userId, keyword);
 };
